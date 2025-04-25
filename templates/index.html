@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Restaurant AI Tool</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    .dish { margin-bottom: 8px; }
+    .caption, .image {
+      margin-top: 24px;
+      background: #f4f4f4;
+      padding: 12px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔥 Top 5 Dishes (Yesterday)</h1>
+  <div>
+    {% for dish in dishes %}
+      <div class="dish">• {{ dish.name }} — Sold: {{ dish.sold }}</div>
+    {% endfor %}
+  </div>
+
+  <div class="caption">
+    <h3>📝 AI Generated Caption</h3>
+    <p>{{ caption }}</p>
+  </div>
+
+  <!-- Caption Regenerate -->
+  <form action="/regenerate-caption" method="post">
+    <input type="hidden" name="image_url" value="{{ image_url }}">
+    <button type="submit">🔁 Regenerate Caption</button>
+  </form>
+
+  <div class="image">
+    <h3>📸 AI Generated Image</h3>
+    <img src="{{ image_url }}" alt="AI Dish" width="400">
+  </div>
+
+
+  <!-- Image Regenerate -->
+  <form action="/regenerate-image" method="post">
+    <input type="hidden" name="caption" value="{{ caption }}">
+    <button type="submit">🖼️ Regenerate Image</button>
+  </form>
+
+  <form action="/post-to-instagram" method="post">
+    <input type="hidden" name="image_url" value="{{ image_url }}">
+    <input type="hidden" name="caption" value="{{ caption }}">
+    <button type="submit">📤 Post to Instagram</button>
+    {% if post_status %}
+      <p style="color: green; margin-top: 10px;">{{ post_status }}</p>
+    {% endif %}
+  </form>
+
+
+  
+</body>
+</html>
