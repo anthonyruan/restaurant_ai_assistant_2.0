@@ -70,19 +70,14 @@ def get_top_dishes():
 
 # === Generate AI Caption ===
 def generate_caption(dish_list):
-    try:
-        prompt = f"Generate an engaging Instagram caption promoting these dishes: {', '.join([d['name'] for d in dish_list])}"
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return response.choices[0].message.content
-    except openai.RateLimitError:
-        return "⚠️ OpenAI API配额已超限，请稍后再试"
-    except Exception as e:
-        return f"⚠️ 生成文案时出错: {str(e)}"
+    prompt = f"Generate an engaging Instagram caption promoting these dishes: {', '.join([d['name'] for d in dish_list])}"
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return response.choices[0].message.content
 
 # === Custom prompts for image generation ===
 dish_prompt_overrides = {
