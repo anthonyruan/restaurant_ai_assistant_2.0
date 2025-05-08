@@ -251,6 +251,10 @@ def generate_weather_image():
         return "https://via.placeholder.com/400x400.png?text=Image+Error"
 
 # === Render Homepage with Initial Data (No Image Yet) ===
+@app.route("/health")
+def health_check():
+    return "OK", 200
+
 @app.route("/")
 def index():
     top_dishes = get_top_dishes()
