@@ -1,12 +1,25 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
 from dotenv import load_dotenv
 import openai
+import uuid
+import json
 import requests
 import datetime
 import os
 import base64
 import functools
 import time
+from werkzeug.utils import secure_filename
+import random  # Add this at the top if not present
+
+
+UPLOAD_FOLDER = 'static/images/dishes'
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
+DISH_IMAGE_MAP_PATH = 'dish_image_map.json'
+
+
+
+
 
 load_dotenv()
 
@@ -18,6 +31,8 @@ SQUARE_ACCESS_TOKEN = os.getenv("SQUARE_ACCESS_TOKEN")
 SQUARE_LOCATION_ID = os.getenv("SQUARE_LOCATION_ID")
 WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 
+UPLOAD_FOLDER = 'static/images/dishes'
+ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
 
 def ttl_cache(ttl_seconds):
     def decorator(func):
@@ -258,13 +273,20 @@ def health_check():
 @app.route("/")
 def index():
     top_dishes = get_top_dishes()
+    # For sales-based content, use uploaded images
+    for dish in top_dishes:
+        dish['image_url'] = get_dish_image(dish['name'])
+
     caption = generate_caption(top_dishes)
-    top_dish_name = top_dishes[0]["name"]
-    image_url = None  # 延迟生成
-    weather_image_url = None  # 延迟生成
+    # The main sales image will be the first top dish's uploaded image
+    image_url = top_dishes[0]['image_url'] if top_dishes else None
+
+    # Weather image no longer AI generated
+    weather_image_url = None
+    
     holiday_info = get_holiday_info()
     holiday_caption = None
-    holiday_image_url = None  # 延迟生成
+    holiday_image_url = None  # Holiday image still AI generated initially
 
     # Get tomorrow's weather forecast safely
     try:
@@ -328,25 +350,31 @@ def regenerate_weather_caption():
         image_url=image_url,
         weather_info=weather_info,
         weather_caption=weather_caption_text,
+        highlight_weather_caption=True,
         active_tab="weather"
     )
 
 # === Handle POST: Regenerate Sales-Based Caption Only ===
 @app.route("/regenerate-caption", methods=["POST"])
 def regenerate_sales_caption():
+    print("DEBUG: Regenerating caption...")
     top_dishes = get_top_dishes()
-    image_url = request.form.get("image_url")
+    # Add image_url to each dish in top_dishes
+    for dish in top_dishes:
+        dish['image_url'] = get_dish_image(dish['name'])
     weather_info = request.form.get("weather_info")
     weather_caption = request.form.get("weather_caption")
     caption = generate_caption(top_dishes)
+    print(f"DEBUG: New caption is: {caption}")
 
     return render_template(
         "index.html",
         dishes=top_dishes,
         caption=caption,
-        image_url=image_url,
+        image_url=top_dishes[0]['image_url'] if top_dishes else None,
         weather_info=weather_info,
         weather_caption=weather_caption,
+        highlight_caption=True,
         active_tab="sales"
     )
 
@@ -354,11 +382,13 @@ def regenerate_sales_caption():
 @app.route("/regenerate-image", methods=["POST"])
 def regenerate_sales_image():
     top_dishes = get_top_dishes()
+    for dish in top_dishes:
+        dish['image_url'] = get_dish_image(dish['name'])
     caption = request.form.get("caption")
     weather_info = request.form.get("weather_info")
     weather_caption = request.form.get("weather_caption")
-    top_dish_name = top_dishes[0]["name"]
-    image_url = generate_dish_image(top_dish_name)
+    # Always select a new random image for the top dish
+    image_url = get_dish_image(top_dishes[0]['name']) if top_dishes else None
 
     return render_template(
         "index.html",
@@ -367,15 +397,22 @@ def regenerate_sales_image():
         image_url=image_url,
         weather_info=weather_info,
         weather_caption=weather_caption,
-        active_tab="sales"
+        active_tab="sales",
+        highlight_image=True
     )
 
 
 # === Handle POST: Publish Sales-Based Content to Instagram ===
 @app.route("/post-to-instagram", methods=["POST"])
 def post_to_instagram():
-    image_url = request.form.get("image_url")
+    image_url_relative = request.form.get("image_url")
     caption = request.form.get("caption")
+
+    # Construct full absolute URL for the image
+    if image_url_relative and not image_url_relative.startswith('http'):
+        image_url = request.url_root.rstrip('/') + image_url_relative
+    else:
+        image_url = image_url_relative
 
     instagram_account_id = os.getenv("IG_USER_ID")
     access_token = os.getenv("IG_ACCESS_TOKEN")
@@ -424,7 +461,8 @@ def regenerate_weather_image():
     weather_info = request.form.get("weather_info")
     weather_caption = request.form.get("weather_caption")
 
-    weather_image_url = generate_weather_image()
+    # Weather image no longer AI generated, set to None
+    weather_image_url = None
 
     return render_template(
         "index.html",
@@ -434,14 +472,21 @@ def regenerate_weather_image():
         weather_info=weather_info,
         weather_caption=weather_caption,
         weather_image_url=weather_image_url,
+        highlight_weather_image=True,
         active_tab="weather"
     )
 
 # === Handle POST: Publish Weather-Based Content to Instagram ===
 @app.route("/post-weather-to-instagram", methods=["POST"])
 def post_weather_to_instagram():
-    image_url = request.form.get("weather_image_url")
+    image_url_relative = request.form.get("weather_image_url")
     caption = request.form.get("weather_caption")
+
+    # Construct full absolute URL for the image
+    if image_url_relative and not image_url_relative.startswith('http'):
+        image_url = request.url_root.rstrip('/') + image_url_relative
+    else:
+        image_url = image_url_relative
 
     instagram_account_id = os.getenv("IG_USER_ID")
     access_token = os.getenv("IG_ACCESS_TOKEN")
@@ -519,6 +564,7 @@ def regenerate_holiday_image():
         weather_caption=weather_caption,
         holiday_caption=holiday_caption,
         holiday_image_url=holiday_image_url,
+        highlight_holiday_image=True,
         active_tab="holiday" 
     )
 
@@ -527,8 +573,14 @@ def regenerate_holiday_image():
 # === Handle POST: Publish Holiday-Based Content to Instagram ===
 @app.route("/post-holiday-to-instagram", methods=["POST"])
 def post_holiday_to_instagram():
-    image_url = request.form.get("holiday_image_url")
+    image_url_relative = request.form.get("holiday_image_url")
     caption = request.form.get("holiday_caption")
+
+    # Construct full absolute URL for the image
+    if image_url_relative and not image_url_relative.startswith('http'):
+        image_url = request.url_root.rstrip('/') + image_url_relative
+    else:
+        image_url = image_url_relative
 
     instagram_account_id = os.getenv("IG_USER_ID")
     access_token = os.getenv("IG_ACCESS_TOKEN")
@@ -602,6 +654,7 @@ def regenerate_holiday_caption():
         holiday_message=holiday_info["message"],
         weather_image_url=None,
         holiday_image_url=None,
+        highlight_holiday_caption=True,
         active_tab="holiday"
     )
 
@@ -700,3 +753,108 @@ def refresh_holiday():
         holiday_image_url=holiday_image_url,
         active_tab="holiday"
     )
+
+@app.route('/upload-images', methods=['GET', 'POST'])
+def upload_images():
+    if request.method == 'POST':
+        files = request.files.getlist('images')
+        dish_names = request.form.getlist('dish_names')
+        if not os.path.exists(UPLOAD_FOLDER):
+            os.makedirs(UPLOAD_FOLDER)
+        # Load or initialize mapping
+        if os.path.exists(DISH_IMAGE_MAP_PATH):
+            with open(DISH_IMAGE_MAP_PATH, 'r') as f:
+                dish_image_map = json.load(f)
+        else:
+            dish_image_map = {}
+        for file, dish_name in zip(files, dish_names):
+            if file and allowed_file(file.filename):
+                ext = file.filename.rsplit('.', 1)[1].lower()
+                filename = f'{uuid.uuid4().hex}.{ext}'
+                file.save(os.path.join(UPLOAD_FOLDER, filename))
+                dish_image_map.setdefault(dish_name, []).append(filename)
+        # Save mapping
+        with open(DISH_IMAGE_MAP_PATH, 'w') as f:
+            json.dump(dish_image_map, f, indent=2)
+        return '', 200
+    return render_template('upload_images.html')
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_dish_image(dish_name):
+    try:
+        with open('dish_image_map.json', 'r') as f:
+            dish_image_map = json.load(f)
+        if dish_name in dish_image_map and dish_image_map[dish_name]:
+            filename = random.choice(dish_image_map[dish_name])  # Randomly select one image
+            return f'/static/images/dishes/{filename}'
+    except Exception as e:
+        print(f"Error loading image for {dish_name}: {e}")
+    return '/static/images/placeholder.jpg'
+
+@app.route('/manage-images', methods=['GET'])
+def manage_images():
+    # Load mapping
+    if os.path.exists(DISH_IMAGE_MAP_PATH):
+        with open(DISH_IMAGE_MAP_PATH, 'r') as f:
+            dish_image_map = json.load(f)
+    else:
+        dish_image_map = {}
+    # Collect all dish names for category selection
+    all_dish_names = sorted(set(dish_image_map.keys()) | {d['name'] for d in get_top_dishes()})
+    return render_template('manage_images.html', dish_image_map=dish_image_map, all_dish_names=all_dish_names)
+
+@app.route('/delete-image', methods=['POST'])
+def delete_image():
+    filename = request.form['filename']
+    dish_name = request.form['dish_name']
+    # Remove file from disk
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+    # Remove from mapping
+    if os.path.exists(DISH_IMAGE_MAP_PATH):
+        with open(DISH_IMAGE_MAP_PATH, 'r') as f:
+            dish_image_map = json.load(f)
+        if dish_name in dish_image_map and filename in dish_image_map[dish_name]:
+            dish_image_map[dish_name].remove(filename)
+            if not dish_image_map[dish_name]:
+                del dish_image_map[dish_name]
+        with open(DISH_IMAGE_MAP_PATH, 'w') as f:
+            json.dump(dish_image_map, f, indent=2)
+    return redirect(url_for('manage_images'))
+
+@app.route('/replace-image', methods=['POST'])
+def replace_image():
+    old_filename = request.form['old_filename']
+    dish_name = request.form['dish_name']
+    new_file = request.files['new_image']
+    # Save new file with the same filename (overwrite)
+    if new_file and allowed_file(new_file.filename):
+        file_path = os.path.join(UPLOAD_FOLDER, old_filename)
+        new_file.save(file_path)
+    return redirect(url_for('manage_images'))
+
+@app.route('/change-image-category', methods=['POST'])
+def change_image_category():
+    filename = request.form['filename']
+    old_dish_name = request.form['old_dish_name']
+    new_dish_name = request.form['new_dish_name']
+    # Update mapping
+    if os.path.exists(DISH_IMAGE_MAP_PATH):
+        with open(DISH_IMAGE_MAP_PATH, 'r') as f:
+            dish_image_map = json.load(f)
+        # Remove from old category
+        if old_dish_name in dish_image_map and filename in dish_image_map[old_dish_name]:
+            dish_image_map[old_dish_name].remove(filename)
+            if not dish_image_map[old_dish_name]:
+                del dish_image_map[old_dish_name]
+        # Add to new category
+        dish_image_map.setdefault(new_dish_name, []).append(filename)
+        with open(DISH_IMAGE_MAP_PATH, 'w') as f:
+            json.dump(dish_image_map, f, indent=2)
+    return redirect(url_for('manage_images'))
+
+if __name__ == "__main__":
+    app.run(debug=True)

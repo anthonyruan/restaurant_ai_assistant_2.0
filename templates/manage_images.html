@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Library Management</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f8f8fa; }
+        .container { max-width: 1100px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 2px 16px #0001; padding: 32px; }
+        h2 { margin-bottom: 24px; }
+        .images-grid { display: flex; flex-wrap: wrap; gap: 28px; justify-content: flex-start; }
+        .image-card {
+            background: #f4f4f7;
+            border-radius: 14px;
+            padding: 18px 14px 16px 14px;
+            width: 220px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 2px 8px #0001;
+            transition: transform 0.15s, box-shadow 0.15s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .image-card:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 6px 24px #0002;
+        }
+        .image-card img {
+            width: 180px;
+            aspect-ratio: 4/3;
+            height: auto;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: #eaeaea;
+            cursor: pointer;
+        }
+        .filename {
+            display: block;
+            width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin: 0 auto 8px auto;
+            font-size: 13px;
+            color: #888;
+            cursor: pointer;
+            vertical-align: middle;
+            font-size: 12px;
+            color: #666;
+            margin-left: 4px;
+        }
+        .image-card form { margin: 6px 0 0 0; }
+        button {
+            background: #007aff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 4px 0 0 0;
+            transition: background 0.15s;
+        }
+        button.delete { background: #e53e3e; }
+        button.replace { background: #3182ce; }
+        button.change { background: #38a169; }
+        button.delete:hover { background: #c53030; }
+        button.replace:hover { background: #2563eb; }
+        button.change:hover { background: #25855a; }
+        select, input[type="file"] { margin: 6px 0; }
+        /* Custom file upload button */
+        .custom-file-upload {
+            display: inline-block;
+            background: #3182ce;
+            color: #fff;
+            border-radius: 6px;
+            padding: 7px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 4px 0 0 0;
+            transition: background 0.15s;
+            font-weight: 500;
+            border: none;
+            position: relative;
+        }
+        .custom-file-upload input[type="file"] {
+            display: none;
+        }
+        .custom-file-upload:hover {
+            background: #2563eb;
+        }
+        .file-chosen {
+            display: inline-block;
+            max-width: 90px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+            font-size: 12px;
+            color: #666;
+            margin-left: 4px;
+        }
+        /* Preview Modal Styles */
+        #imagePreview {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            cursor: pointer;
+        }
+        #previewImg {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px #000c;
+        }
+        @media (max-width: 700px) {
+            .container { padding: 10px; }
+            .images-grid { gap: 14px; justify-content: center; }
+            .image-card { width: 98vw; max-width: 320px; }
+            .image-card img, .filename { width: 90vw; max-width: 260px; }
+        }
+    </style>
+    <script>
+    function showFileName(input) {
+        var fileName = input.files[0] ? input.files[0].name : '';
+        var span = input.parentNode.parentNode.querySelector('.file-chosen');
+        if (span) {
+            span.textContent = fileName;
+        }
+    }
+    function showPreview(src) {
+      document.getElementById('previewImg').src = src;
+      document.getElementById('imagePreview').style.display = 'flex';
+    }
+    </script>
+</head>
+<body>
+<div class="container">
+    <h2>Image Library Management</h2>
+    <div class="images-grid">
+        {% for dish, files in dish_image_map.items() %}
+            {% for file in files %}
+                <div class="image-card">
+                    <img src="/static/images/dishes/{{ file }}" alt="{{ dish }}" onclick="showPreview(this.src)">
+                    <div><strong>Dish:</strong> {{ dish }}</div>
+                    <div class="filename" title="{{ file }}">{{ file }}</div>
+                    <form action="/delete-image" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this image? This action cannot be undone.');">
+                        <input type="hidden" name="filename" value="{{ file }}">
+                        <input type="hidden" name="dish_name" value="{{ dish }}">
+                        <button type="submit" class="delete">Delete</button>
+                    </form>
+                    <form action="/replace-image" method="post" enctype="multipart/form-data" style="display:inline;">
+                        <label class="custom-file-upload">
+                            <input type="file" name="new_image" required onchange="showFileName(this)">
+                            <span>Choose Image</span>
+                        </label>
+                        <span class="file-chosen"></span>
+                        <input type="hidden" name="old_filename" value="{{ file }}">
+                        <input type="hidden" name="dish_name" value="{{ dish }}">
+                        <button type="submit" class="replace">Replace</button>
+                    </form>
+                    <form action="/change-image-category" method="post" style="display:inline;">
+                        <select name="new_dish_name">
+                            {% for d in all_dish_names %}
+                                <option value="{{ d }}" {% if d == dish %}selected{% endif %}>{{ d }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="hidden" name="filename" value="{{ file }}">
+                        <input type="hidden" name="old_dish_name" value="{{ dish }}">
+                        <button type="submit" class="change">Change Category</button>
+                    </form>
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+<!-- Image Preview Modal -->
+<div id="imagePreview" onclick="this.style.display='none'">
+  <img id="previewImg">
+</div>
+</body>
+</html>

@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Restaurant AI Marketing Assistant</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes highlight-fade {
+      0% { background-color: rgba(255, 255, 0, 0.5); }
+      100% { background-color: transparent; }
+    }
+    .highlight {
+      animation: highlight-fade 1.5s ease-out;
+    }
+  </style>
 </head>
   <body class="bg-gray-100 p-8" onload="showTab('{{ active_tab | default('sales') }}', null)">
   <div class="text-center mb-8">
@@ -44,7 +53,7 @@
     <div class="bg-white p-6 rounded-xl shadow flex flex-col justify-between">
       <div>
         <h2 class="text-xl font-bold mb-4">📝 AI Generated Caption</h2>
-        <p>{{ caption }}</p>
+        <p id="caption-text" class="{{ 'highlight' if highlight_caption }}">{{ caption }}</p>
       </div>
       <form action="/regenerate-caption" method="post" class="mt-4">
         <input type="hidden" name="image_url" value="{{ image_url }}">
@@ -58,7 +67,7 @@
       <div>
         <h2 class="text-xl font-bold mb-4">📸 AI Generated Image</h2>
         {% if image_url and image_url != "None" %}
-          <img src="{{ image_url }}" class="rounded-md mb-2">
+          <img src="{{ image_url }}" id="sales-image" class="rounded-md mb-2 {{ 'highlight' if highlight_image }}">
         {% else %}
           <p class="text-gray-500">Image not generated yet. Click below to generate.</p>
         {% endif %}
@@ -105,7 +114,7 @@
       <div class="bg-white p-6 rounded-xl shadow flex flex-col justify-between">
         <div>
           <h2 class="text-xl font-bold mb-4">📝 AI Caption Based on Weather</h2>
-          <p>{{ weather_caption }}</p>
+          <p id="weather-caption-text" class="{{ 'highlight' if highlight_weather_caption }}">{{ weather_caption }}</p>
         </div>
         <form action="/weather-caption" method="post" class="mt-4">
           <input type="hidden" name="caption" value="{{ caption }}">
@@ -120,7 +129,7 @@
         <div>
           <h2 class="text-xl font-bold mb-4">🌦️ AI Image Based on Weather</h2>
           {% if weather_image_url and weather_image_url != "None" %}
-            <img src="{{ weather_image_url }}" class="rounded-md mb-2">
+            <img src="{{ weather_image_url }}" id="weather-image" class="rounded-md mb-2 {{ 'highlight' if highlight_weather_image }}">
           {% else %}
             <p class="text-gray-500">Weather image not generated yet.</p>
           {% endif %}
@@ -169,7 +178,7 @@
         <div>
           <h2 class="text-xl font-bold mb-4">📝 AI Caption Based on Holiday</h2>
           {% if holiday_caption %}
-            <p>{{ holiday_caption }}</p>
+            <p id="holiday-caption-text" class="{{ 'highlight' if highlight_holiday_caption }}">{{ holiday_caption }}</p>
           {% else %}
             <p class="text-gray-500">No holiday caption available.</p>
           {% endif %}
@@ -189,7 +198,7 @@
         <div>
           <h2 class="text-xl font-bold mb-4">📸 AI Image Based on Holiday</h2>
           {% if holiday_image_url and holiday_image_url != "None" %}
-            <img src="{{ holiday_image_url }}" class="rounded-md mb-2">
+            <img src="{{ holiday_image_url }}" id="holiday-image" class="rounded-md mb-2 {{ 'highlight' if highlight_holiday_image }}">
           {% else %}
             <p class="text-gray-500">Holiday image not generated yet.</p>
           {% endif %}

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Batch Upload Dish Images and Assign Dish Names</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f8f8fa; }
+        .container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px; }
+        h2 { margin-bottom: 24px; }
+        .upload-section { margin-bottom: 32px; }
+        .images-grid { display: flex; flex-wrap: wrap; gap: 24px; }
+        .image-card { background: #f4f4f7; border-radius: 8px; padding: 16px; width: 180px; box-sizing: border-box; text-align: center; }
+        .image-card img { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; margin-bottom: 12px; }
+        .dish-select { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #ccc; }
+        .actions { margin-top: 32px; text-align: right; }
+        button { background: #007aff; color: #fff; border: none; border-radius: 6px; padding: 10px 24px; font-size: 16px; cursor: pointer; }
+        button:disabled { background: #ccc; }
+        .batch-assign { margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Batch Upload Dish Images and Assign Dish Names</h2>
+    <!-- 1. Upload Images -->
+    <form id="uploadForm" class="upload-section" enctype="multipart/form-data">
+        <input type="file" name="images" id="imageInput" multiple accept="image/*">
+        <button type="submit">Upload Images</button>
+    </form>
+
+    <!-- 2. Batch Assign Dish Names (shown after upload) -->
+    <div id="assignSection" style="display:none;">
+        <div class="batch-assign">
+            <select id="batchDishSelect" class="dish-select">
+                <option value="">Batch Select Dish Name</option>
+                <!-- JS fills dish names -->
+            </select>
+            <button type="button" onclick="batchAssign()">Batch Assign</button>
+        </div>
+        <div class="images-grid" id="imagesGrid">
+            <!-- JS dynamically generates image cards -->
+        </div>
+        <div class="actions">
+            <button id="saveBtn" disabled>Save Assignment</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Assume dish name list is rendered by backend or fetched via AJAX
+    const dishNames = ["Pho", "Banh Mi", "Spring Roll", "Vermicelli", "Sandwich", "Rice Plate"];
+
+    // After uploading images, preview and assign dish names
+    document.getElementById('uploadForm').onsubmit = function(e) {
+        e.preventDefault();
+        const files = document.getElementById('imageInput').files;
+        if (!files.length) return;
+        document.getElementById('assignSection').style.display = 'block';
+        const grid = document.getElementById('imagesGrid');
+        grid.innerHTML = '';
+        for (let i = 0; i < files.length; i++) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const card = document.createElement('div');
+                card.className = 'image-card';
+                card.innerHTML = `
+                    <img src="${evt.target.result}" alt="Preview">
+                    <select class="dish-select" onchange="checkAllAssigned()">
+                        <option value="">Select Dish Name</option>
+                        ${dishNames.map(name => `<option value="${name}">${name}</option>`).join('')}
+                    </select>
+                `;
+                grid.appendChild(card);
+            };
+            reader.readAsDataURL(files[i]);
+        }
+        // Fill batch select
+        document.getElementById('batchDishSelect').innerHTML = `<option value="">Batch Select Dish Name</option>` + dishNames.map(name => `<option value="${name}">${name}</option>`).join('');
+    };
+
+    // Batch assign
+    function batchAssign() {
+        const value = document.getElementById('batchDishSelect').value;
+        if (!value) return;
+        document.querySelectorAll('#imagesGrid .dish-select').forEach(sel => sel.value = value);
+        checkAllAssigned();
+    }
+
+    // Check if all assigned, enable save button
+    function checkAllAssigned() {
+        const allSelected = Array.from(document.querySelectorAll('#imagesGrid .dish-select')).every(sel => sel.value);
+        document.getElementById('saveBtn').disabled = !allSelected;
+    }
+</script>
+</body>
+</html> 
