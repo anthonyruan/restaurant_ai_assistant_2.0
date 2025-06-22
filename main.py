@@ -24,6 +24,7 @@ DISH_IMAGE_MAP_PATH = 'dish_image_map.json'
 load_dotenv()
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # === Load API Keys from Environment ===
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -281,8 +282,8 @@ def index():
     # The main sales image will be the first top dish's uploaded image
     image_url = top_dishes[0]['image_url'] if top_dishes else None
 
-    # Weather image no longer AI generated
-    weather_image_url = None
+    # Generate weather image
+    weather_image_url = generate_weather_image()
     
     holiday_info = get_holiday_info()
     holiday_caption = None
@@ -461,8 +462,8 @@ def regenerate_weather_image():
     weather_info = request.form.get("weather_info")
     weather_caption = request.form.get("weather_caption")
 
-    # Weather image no longer AI generated, set to None
-    weather_image_url = None
+    # AI-generate the weather image
+    weather_image_url = generate_weather_image()
 
     return render_template(
         "index.html",
@@ -796,14 +797,15 @@ def get_dish_image(dish_name):
 @app.route('/manage-images', methods=['GET'])
 def manage_images():
     # Load mapping
-    if os.path.exists(DISH_IMAGE_MAP_PATH):
+    try:
         with open(DISH_IMAGE_MAP_PATH, 'r') as f:
             dish_image_map = json.load(f)
-    else:
+    except (FileNotFoundError, json.JSONDecodeError):
         dish_image_map = {}
-    # Collect all dish names for category selection
-    all_dish_names = sorted(set(dish_image_map.keys()) | {d['name'] for d in get_top_dishes()})
-    return render_template('manage_images.html', dish_image_map=dish_image_map, all_dish_names=all_dish_names)
+    
+    all_dish_names = list(dish_image_map.keys())
+
+    return render_template('manage_images.html', dish_image_map=dish_image_map, all_dish_names=all_dish_names, upload_folder=app.config['UPLOAD_FOLDER'])
 
 @app.route('/delete-image', methods=['POST'])
 def delete_image():

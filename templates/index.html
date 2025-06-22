@@ -15,7 +15,26 @@
     }
   </style>
 </head>
-  <body class="bg-gray-100 p-8" onload="showTab('{{ active_tab | default('sales') }}', null)">
+<body class="bg-gray-100 pt-24" onload="showTab('{{ active_tab | default('sales') }}', null)">
+  <!-- Navigation Bar -->
+  <nav class="bg-white shadow-md fixed top-0 left-0 right-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <a href="/" class="flex-shrink-0 text-2xl font-bold text-blue-600">
+            AI Assistant
+          </a>
+        </div>
+        <div class="hidden md:block">
+          <div class="ml-10 flex items-baseline space-x-4">
+            <a href="{{ url_for('manage_images') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow">Image Library</a>
+            <a href="{{ url_for('upload_images') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow">Upload Images</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
   <div class="text-center mb-8">
     <h1 class="text-4xl font-bold">Restaurant AI Marketing Assistant</h1>
     <p class="text-lg text-gray-600">Generate Instagram content based on sales data, weather, and holidays</p>
