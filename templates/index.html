@@ -15,15 +15,13 @@
     }
   </style>
 </head>
-<body class="bg-gray-100 pt-24" onload="showTab('{{ active_tab | default('sales') }}', null)">
+<body class="bg-gray-100 pt-28 pb-8 px-2 sm:px-8" onload="showTab('{{ active_tab | default('sales') }}', null)">
   <!-- Navigation Bar -->
-  <nav class="bg-white shadow-md fixed top-0 left-0 right-0 z-10">
+  <nav class="bg-white shadow-lg fixed top-0 left-0 right-0 z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <div class="flex items-center">
-          <a href="/" class="flex-shrink-0 text-2xl font-bold text-blue-600">
-            AI Assistant
-          </a>
+          <a href="/" class="flex-shrink-0 text-2xl font-bold text-blue-600 tracking-tight">AI Assistant</a>
         </div>
         <div class="hidden md:block">
           <div class="ml-10 flex items-baseline space-x-4">
@@ -34,21 +32,21 @@
     </div>
   </nav>
 
-  <div class="text-center mb-8">
-    <h1 class="text-4xl font-bold">Restaurant AI Marketing Assistant</h1>
-    <p class="text-lg text-gray-600">Generate Instagram content based on sales data, weather, and holidays</p>
+  <div class="text-center mb-10">
+    <h1 class="text-4xl font-bold tracking-tight">Restaurant AI Marketing Assistant</h1>
+    <p class="text-lg text-gray-600 mt-2">Generate Instagram content based on sales data, weather, and holidays</p>
   </div>
 
   <!-- Tabs -->
-  <div class="mb-6 flex justify-center space-x-2">
-    <button class="tab-button text-blue-600 border-b-2 border-blue-600 font-semibold px-4 py-2" onclick="showTab('sales', this)">Sales-Based Content</button>
-    <button class="tab-button text-gray-700 border-b-2 border-transparent px-4 py-2" onclick="showTab('weather', this)">Weather-Based Content</button>
-    <button class="tab-button text-gray-700 border-b-2 border-transparent px-4 py-2" onclick="showTab('holiday', this)">Holiday-Based Content</button>
+  <div class="mb-8 flex justify-center space-x-2">
+    <button class="tab-button px-5 py-2 rounded-t-lg text-base font-semibold focus:outline-none transition-all border-b-4 {{ 'border-blue-600 text-blue-600 bg-white shadow' if active_tab == 'sales' else 'border-transparent text-gray-700 bg-gray-100' }}" onclick="showTab('sales', this)">Sales-Based Content</button>
+    <button class="tab-button px-5 py-2 rounded-t-lg text-base font-semibold focus:outline-none transition-all border-b-4 {{ 'border-blue-600 text-blue-600 bg-white shadow' if active_tab == 'weather' else 'border-transparent text-gray-700 bg-gray-100' }}" onclick="showTab('weather', this)">Weather-Based Content</button>
+    <button class="tab-button px-5 py-2 rounded-t-lg text-base font-semibold focus:outline-none transition-all border-b-4 {{ 'border-blue-600 text-blue-600 bg-white shadow' if active_tab == 'holiday' else 'border-transparent text-gray-700 bg-gray-100' }}" onclick="showTab('holiday', this)">Holiday-Based Content</button>
   </div>
 
   <!-- Sales Tab -->
-  <div id="tab-sales" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <div class="bg-white p-6 rounded-xl shadow flex flex-col justify-between">
+  <div id="tab-sales" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
       <div>
         <h2 class="text-xl font-bold mb-4">🔥 Top 5 Dishes (Yesterday)</h2>
         {% for dish in dishes %}<div class="mb-2">• {{ dish.name }} — Sold: {{ dish.sold }}</div>{% endfor %}
@@ -62,13 +60,11 @@
         <input type="hidden" name="holiday_caption" value="{{ holiday_caption }}">
         <input type="hidden" name="holiday_message" value="{{ holiday_message }}">
         <input type="hidden" name="holiday_image_url" value="{{ holiday_image_url }}">
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-          🔄 Refresh Sales Data
-        </button>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">Regenerate</button>
       </form>
     </div>
 
-    <div class="bg-white p-6 rounded-xl shadow flex flex-col justify-between">
+    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
       <div>
         <h2 class="text-xl font-bold mb-4">📝 AI Generated Caption</h2>
         <p id="caption-text" class="{{ 'highlight' if highlight_caption }}">{{ caption }}</p>
@@ -77,15 +73,15 @@
         <input type="hidden" name="image_url" value="{{ image_url }}">
         <input type="hidden" name="weather_info" value="{{ weather_info }}">
         <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
-        <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">🔁 Regenerate Caption</button>
+        <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
       </form>
     </div>
 
-    <div class="bg-white p-6 rounded-xl shadow flex flex-col justify-between">
+    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
       <div>
         <h2 class="text-xl font-bold mb-4">📸 AI Generated Image</h2>
         {% if image_url and image_url != "None" %}
-          <img src="{{ image_url }}" id="sales-image" class="rounded-md mb-2 {{ 'highlight' if highlight_image }}">
+          <img src="{{ image_url }}" id="sales-image" class="rounded-md mb-2 {{ 'highlight' if highlight_image }} w-full h-48 object-cover">
         {% else %}
           <p class="text-gray-500">Image not generated yet. Click below to generate.</p>
         {% endif %}
@@ -94,13 +90,13 @@
         <input type="hidden" name="caption" value="{{ caption }}">
         <input type="hidden" name="weather_info" value="{{ weather_info }}">
         <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
-        <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">🖼️ Generate Image Now</button>
+        <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
       </form>
     </div>
 
     <!-- Post to Instagram Button -->
-    <div class="col-span-1 md:col-span-3 flex justify-center">
-      <form action="/post-to-instagram" method="post" class="mt-4">
+    <div class="col-span-1 md:col-span-3 flex justify-center mt-4">
+      <form action="/post-to-instagram" method="post">
         <input type="hidden" name="caption" value="{{ caption }}">
         <input type="hidden" name="image_url" value="{{ image_url }}">
         <button class="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded shadow">📤 Post to Instagram</button>
@@ -108,138 +104,132 @@
     </div>
   </div>
 
-    <!-- Weather Tab -->
-    <div id="tab-weather" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Weather Info Card -->
-      <div class="bg-white p-6 rounded-xl shadow flex flex-col justify-between">
-        <div>
-          <h2 class="text-xl font-bold mb-4">🌤️ Tomorrow's Weather</h2>
-          <p>{{ weather_info }}</p>
-        </div>
-        <form action="/refresh-weather" method="post" class="mt-4">
-          <input type="hidden" name="caption" value="{{ caption }}">
-          <input type="hidden" name="image_url" value="{{ image_url }}">
-          <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
-          <input type="hidden" name="weather_image_url" value="{{ weather_image_url }}">
-          <input type="hidden" name="holiday_caption" value="{{ holiday_caption }}">
-          <input type="hidden" name="holiday_message" value="{{ holiday_message }}">
-          <input type="hidden" name="holiday_image_url" value="{{ holiday_image_url }}">
-          <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">🔄 Refresh Weather</button>
-        </form>
+  <!-- Weather Tab -->
+  <div id="tab-weather" class="hidden grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+      <div>
+        <h2 class="text-xl font-bold mb-4">🌤️ Tomorrow's Weather</h2>
+        <p>{{ weather_info }}</p>
       </div>
-
-      <!-- Weather Caption Card -->
-      <div class="bg-white p-6 rounded-xl shadow flex flex-col justify-between">
-        <div>
-          <h2 class="text-xl font-bold mb-4">📝 AI Caption Based on Weather</h2>
-          <p id="weather-caption-text" class="{{ 'highlight' if highlight_weather_caption }}">{{ weather_caption }}</p>
-        </div>
-        <form action="/weather-caption" method="post" class="mt-4">
-          <input type="hidden" name="caption" value="{{ caption }}">
-          <input type="hidden" name="image_url" value="{{ image_url }}">
-          <input type="hidden" name="weather_info" value="{{ weather_info }}">
-          <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">🔁 Regenerate Caption by Weather</button>
-        </form>
-      </div>
-
-      <!-- Weather Image Card -->
-      <div class="bg-white p-6 rounded-xl shadow flex flex-col justify-between">
-        <div>
-          <h2 class="text-xl font-bold mb-4">🌦️ AI Image Based on Weather</h2>
-          {% if weather_image_url and weather_image_url != "None" %}
-            <img src="{{ weather_image_url }}" id="weather-image" class="rounded-md mb-2 {{ 'highlight' if highlight_weather_image }}">
-          {% else %}
-            <p class="text-gray-500">Weather image not generated yet.</p>
-          {% endif %}
-        </div>
-        <form action="/regenerate-weather-image" method="post" class="mt-4">
-          <input type="hidden" name="caption" value="{{ caption }}">
-          <input type="hidden" name="image_url" value="{{ image_url }}">
-          <input type="hidden" name="weather_info" value="{{ weather_info }}">
-          <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
-          <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">🌧️ Generate Image</button>
-        </form>
-      </div>
-
-      <!-- Post to Instagram -->
-      <div class="col-span-1 md:col-span-3 flex justify-center">
-        <form action="/post-weather-to-instagram" method="post" class="mt-4">
-          <input type="hidden" name="caption" value="{{ weather_caption }}">
-          <input type="hidden" name="image_url" value="{{ weather_image_url }}">
-          <button class="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded shadow">📤 Post to Instagram</button>
-        </form>
-      </div>
+      <form action="/refresh-weather" method="post" class="mt-4">
+        <input type="hidden" name="caption" value="{{ caption }}">
+        <input type="hidden" name="image_url" value="{{ image_url }}">
+        <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
+        <input type="hidden" name="weather_image_url" value="{{ weather_image_url }}">
+        <input type="hidden" name="holiday_caption" value="{{ holiday_caption }}">
+        <input type="hidden" name="holiday_message" value="{{ holiday_message }}">
+        <input type="hidden" name="holiday_image_url" value="{{ holiday_image_url }}">
+        <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
+      </form>
     </div>
 
-    <!-- Holiday Tab -->
-    <div id="tab-holiday" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Holiday Info -->
-      <div class="bg-white p-6 rounded-xl shadow flex flex-col justify-between">
-        <div>
-          <h2 class="text-xl font-bold mb-4">🎊 Tomorrow's Holiday</h2>
-          <p>{{ holiday_message }}</p>
-        </div>
-        <form action="/refresh-holiday" method="post" class="mt-4">
-          <input type="hidden" name="caption" value="{{ caption }}">
-          <input type="hidden" name="image_url" value="{{ image_url }}">
-          <input type="hidden" name="weather_info" value="{{ weather_info }}">
-          <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
-          <input type="hidden" name="weather_image_url" value="{{ weather_image_url }}">
-          <input type="hidden" name="holiday_caption" value="{{ holiday_caption }}">
-          <input type="hidden" name="holiday_image_url" value="{{ holiday_image_url }}">
-          <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">🔄 Refresh Holiday</button>
-        </form>
+    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+      <div>
+        <h2 class="text-xl font-bold mb-4">📝 AI Caption Based on Weather</h2>
+        <p id="weather-caption-text" class="{{ 'highlight' if highlight_weather_caption }}">{{ weather_caption }}</p>
       </div>
-
-      <!-- Holiday Caption -->
-      <div class="bg-white p-6 rounded-xl shadow flex flex-col justify-between">
-        <div>
-          <h2 class="text-xl font-bold mb-4">📝 AI Caption Based on Holiday</h2>
-          {% if holiday_caption %}
-            <p id="holiday-caption-text" class="{{ 'highlight' if highlight_holiday_caption }}">{{ holiday_caption }}</p>
-          {% else %}
-            <p class="text-gray-500">No holiday caption available.</p>
-          {% endif %}
-        </div>
-        <form action="/regenerate-holiday-caption" method="post" class="mt-4">
-          <input type="hidden" name="caption" value="{{ caption }}">
-          <input type="hidden" name="image_url" value="{{ image_url }}">
-          <input type="hidden" name="weather_info" value="{{ weather_info }}">
-          <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
-          <input type="hidden" name="holiday_message" value="{{ holiday_message }}">
-          <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">🔁 Regenerate Holiday Caption</button>
-        </form>
-      </div>
-
-      <!-- Holiday Image -->
-      <div class="bg-white p-6 rounded-xl shadow flex flex-col justify-between">
-        <div>
-          <h2 class="text-xl font-bold mb-4">📸 AI Image Based on Holiday</h2>
-          {% if holiday_image_url and holiday_image_url != "None" %}
-            <img src="{{ holiday_image_url }}" id="holiday-image" class="rounded-md mb-2 {{ 'highlight' if highlight_holiday_image }}">
-          {% else %}
-            <p class="text-gray-500">Holiday image not generated yet.</p>
-          {% endif %}
-        </div>
-        <form action="/regenerate-holiday-image" method="post" class="mt-4">
-          <input type="hidden" name="caption" value="{{ caption }}">
-          <input type="hidden" name="image_url" value="{{ image_url }}">
-          <input type="hidden" name="weather_info" value="{{ weather_info }}">
-          <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
-          <input type="hidden" name="holiday_caption" value="{{ holiday_caption }}">
-          <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">📅 Generate Holiday Image</button>
-        </form>
-      </div>
-
-      <!-- Post to Instagram -->
-      <div class="col-span-1 md:col-span-3 flex justify-center">
-        <form action="/post-holiday-to-instagram" method="post" class="mt-4">
-          <input type="hidden" name="caption" value="{{ holiday_caption }}">
-          <input type="hidden" name="image_url" value="{{ holiday_image_url }}">
-          <button class="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded shadow">📤 Post to Instagram</button>
-        </form>
-      </div>
+      <form action="/weather-caption" method="post" class="mt-4">
+        <input type="hidden" name="caption" value="{{ caption }}">
+        <input type="hidden" name="image_url" value="{{ image_url }}">
+        <input type="hidden" name="weather_info" value="{{ weather_info }}">
+        <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
+      </form>
     </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+      <div>
+        <h2 class="text-xl font-bold mb-4">🌦️ AI Image Based on Weather</h2>
+        {% if weather_image_url and weather_image_url != "None" %}
+          <img src="{{ weather_image_url }}" id="weather-image" class="rounded-md mb-2 {{ 'highlight' if highlight_weather_image }} w-full h-48 object-cover">
+        {% else %}
+          <p class="text-gray-500">Weather image not generated yet.</p>
+        {% endif %}
+      </div>
+      <form action="/regenerate-weather-image" method="post" class="mt-4">
+        <input type="hidden" name="caption" value="{{ caption }}">
+        <input type="hidden" name="image_url" value="{{ image_url }}">
+        <input type="hidden" name="weather_info" value="{{ weather_info }}">
+        <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
+        <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
+      </form>
+    </div>
+
+    <!-- Post to Instagram -->
+    <div class="col-span-1 md:col-span-3 flex justify-center mt-4">
+      <form action="/post-weather-to-instagram" method="post">
+        <input type="hidden" name="caption" value="{{ weather_caption }}">
+        <input type="hidden" name="image_url" value="{{ weather_image_url }}">
+        <button class="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded shadow">📤 Post to Instagram</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Holiday Tab -->
+  <div id="tab-holiday" class="hidden grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+      <div>
+        <h2 class="text-xl font-bold mb-4">🎊 Tomorrow's Holiday</h2>
+        <p>{{ holiday_message }}</p>
+      </div>
+      <form action="/refresh-holiday" method="post" class="mt-4">
+        <input type="hidden" name="caption" value="{{ caption }}">
+        <input type="hidden" name="image_url" value="{{ image_url }}">
+        <input type="hidden" name="weather_info" value="{{ weather_info }}">
+        <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
+        <input type="hidden" name="weather_image_url" value="{{ weather_image_url }}">
+        <input type="hidden" name="holiday_caption" value="{{ holiday_caption }}">
+        <input type="hidden" name="holiday_image_url" value="{{ holiday_image_url }}">
+        <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
+      </form>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+      <div>
+        <h2 class="text-xl font-bold mb-4">📝 AI Caption Based on Holiday</h2>
+        {% if holiday_caption %}
+          <p id="holiday-caption-text" class="{{ 'highlight' if highlight_holiday_caption }}">{{ holiday_caption }}</p>
+        {% else %}
+          <p class="text-gray-500">No holiday caption available.</p>
+        {% endif %}
+      </div>
+      <form action="/regenerate-holiday-caption" method="post" class="mt-4">
+        <input type="hidden" name="caption" value="{{ caption }}">
+        <input type="hidden" name="image_url" value="{{ image_url }}">
+        <input type="hidden" name="weather_info" value="{{ weather_info }}">
+        <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
+        <input type="hidden" name="holiday_message" value="{{ holiday_message }}">
+        <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
+      </form>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+      <div>
+        <h2 class="text-xl font-bold mb-4">📸 AI Image Based on Holiday</h2>
+        {% if holiday_image_url and holiday_image_url != "None" %}
+          <img src="{{ holiday_image_url }}" id="holiday-image" class="rounded-md mb-2 {{ 'highlight' if highlight_holiday_image }} w-full h-48 object-cover">
+        {% else %}
+          <p class="text-gray-500">Holiday image not generated yet.</p>
+        {% endif %}
+      </div>
+      <form action="/regenerate-holiday-image" method="post" class="mt-4">
+        <input type="hidden" name="caption" value="{{ caption }}">
+        <input type="hidden" name="image_url" value="{{ image_url }}">
+        <input type="hidden" name="weather_info" value="{{ weather_info }}">
+        <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
+        <input type="hidden" name="holiday_caption" value="{{ holiday_caption }}">
+        <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
+      </form>
+    </div>
+
+    <!-- Post to Instagram -->
+    <div class="col-span-1 md:col-span-3 flex justify-center mt-4">
+      <form action="/post-holiday-to-instagram" method="post">
+        <input type="hidden" name="caption" value="{{ holiday_caption }}">
+        <input type="hidden" name="image_url" value="{{ holiday_image_url }}">
+        <button class="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded shadow">📤 Post to Instagram</button>
+      </form>
+    </div>
+  </div>
 
   <script>
     function showTab(tab, clickedBtn) {
@@ -247,20 +237,20 @@
       document.getElementById('tab-' + tab).classList.remove('hidden');
 
       document.querySelectorAll('.tab-button').forEach(btn => {
-        btn.classList.remove('text-blue-600', 'border-blue-600', 'font-semibold');
-        btn.classList.add('text-gray-700', 'border-transparent');
+        btn.classList.remove('text-blue-600', 'border-blue-600', 'font-semibold', 'bg-white', 'shadow');
+        btn.classList.add('text-gray-700', 'border-transparent', 'bg-gray-100');
       });
 
       if (clickedBtn) {
-        clickedBtn.classList.add('text-blue-600', 'border-blue-600', 'font-semibold');
-        clickedBtn.classList.remove('text-gray-700', 'border-transparent');
+        clickedBtn.classList.add('text-blue-600', 'border-blue-600', 'font-semibold', 'bg-white', 'shadow');
+        clickedBtn.classList.remove('text-gray-700', 'border-transparent', 'bg-gray-100');
       } else {
         // 页面加载时，根据 tab 名称自动高亮按钮
         const index = { sales: 0, weather: 1, holiday: 2 }[tab] || 0;
         const defaultBtn = document.querySelectorAll('.tab-button')[index];
         if (defaultBtn) {
-          defaultBtn.classList.add('text-blue-600', 'border-blue-600', 'font-semibold');
-          defaultBtn.classList.remove('text-gray-700', 'border-transparent');
+          defaultBtn.classList.add('text-blue-600', 'border-blue-600', 'font-semibold', 'bg-white', 'shadow');
+          defaultBtn.classList.remove('text-gray-700', 'border-transparent', 'bg-gray-100');
         }
       }
     }

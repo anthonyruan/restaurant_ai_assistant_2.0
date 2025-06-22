@@ -333,10 +333,10 @@ def index():
 @app.route("/weather-caption", methods=["POST"])
 def regenerate_weather_caption():
     top_dishes = get_top_dishes()
-    caption = request.form.get("caption")  # ✅ 保留原 caption（基于销量）
+    caption = request.form.get("caption")
     image_url = request.form.get("image_url")
     weather_info = request.form.get("weather_info")
-    weather_caption_text = generate_weather_caption()  # ✅ 只重新生成天气的
+    weather_caption_text = generate_weather_caption()
 
     return render_template(
         "index.html",
@@ -456,7 +456,6 @@ def regenerate_weather_image():
     weather_info = request.form.get("weather_info")
     weather_caption = request.form.get("weather_caption")
 
-    # Get local image based on the existing weather caption
     weather_image_url = get_image_from_caption(weather_caption)
 
     return render_template(
@@ -532,7 +531,6 @@ def regenerate_holiday_image():
     weather_caption = request.form.get("weather_caption")
     holiday_caption = request.form.get("holiday_caption")
 
-    # 构建节假日图片生成 prompt
     prompt = (
         f"A vibrant Vietnamese dish presented with festive decorations, celebrating a special holiday. "
         f"Studio lighting, warm ambiance, wooden table background, close-up, Instagram style"
@@ -560,7 +558,7 @@ def regenerate_holiday_image():
         holiday_caption=holiday_caption,
         holiday_image_url=holiday_image_url,
         highlight_holiday_image=True,
-        active_tab="holiday" 
+        active_tab="holiday"
     )
 
 
@@ -636,7 +634,7 @@ def regenerate_holiday_caption():
         except Exception as e:
             holiday_caption = f"⚠️ Error generating holiday caption: {str(e)}"
     else:
-        holiday_caption = None  # 如果不是节日，保持不变
+        holiday_caption = None
 
     return render_template(
         "index.html",
