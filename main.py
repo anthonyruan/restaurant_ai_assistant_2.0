@@ -208,9 +208,26 @@ def generate_weather_caption():
     weather = get_weather()
     if not weather:
         return "⚠️ Weather data unavailable"
+        
+    # Get the list of available dishes from the image map
+    try:
+        with open(DISH_IMAGE_MAP_PATH, 'r') as f:
+            dish_image_map = json.load(f)
+        dish_list = list(dish_image_map.keys())
+    except (FileNotFoundError, json.JSONDecodeError):
+        dish_list = []
+
+    if not dish_list:
+        # Fallback if no dishes are available in the map
+        dish_list_str = "any delicious Vietnamese dish"
+    else:
+        dish_list_str = ", ".join(dish_list)
+
     prompt = (
-        f"Write an Instagram caption recommending Vietnamese dishes for a {weather['description']} day "
-        f"with a temperature of {weather['temp']}°F. Make it appealing and cozy."
+        f"Write an Instagram caption recommending a dish for a {weather['description']} day "
+        f"with a temperature of {weather['temp']}°F. "
+        f"IMPORTANT: You MUST choose a dish ONLY from the following list: {dish_list_str}. "
+        f"Make the caption appealing and cozy, and mention the chosen dish by name."
     )
     try:
         response = client.chat.completions.create(
@@ -245,27 +262,6 @@ def generate_dish_image(dish_name):
 
 
 
-# === Generate Dish Image Based on Weather Mood ===
-def generate_weather_image():
-    weather = get_weather()
-    if not weather:
-        return "https://via.placeholder.com/400x400.png?text=No+Image"
-    prompt = (
-        f"A cozy Vietnamese noodle soup served on a {weather['description']} day, steam rising, "
-        f"warm lighting, wooden table, comforting feel"
-    )
-    try:
-        response = client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            n=1,
-            size="1024x1024"
-        )
-        return response.data[0].url
-    except Exception as e:
-        print("⚠️ Error generating weather image:", e)
-        return "https://via.placeholder.com/400x400.png?text=Image+Error"
-
 # === Render Homepage with Initial Data (No Image Yet) ===
 @app.route("/health")
 def health_check():
@@ -282,8 +278,9 @@ def index():
     # The main sales image will be the first top dish's uploaded image
     image_url = top_dishes[0]['image_url'] if top_dishes else None
 
-    # Generate weather image
-    weather_image_url = generate_weather_image()
+    # Generate weather caption and then select image based on it
+    weather_caption_text = generate_weather_caption()
+    weather_image_url = get_image_from_caption(weather_caption_text)
     
     holiday_info = get_holiday_info()
     holiday_caption = None
@@ -304,9 +301,6 @@ def index():
     except Exception as e:
         print("❌ Error fetching forecast:", e)
         weather_info = "⚠️ Error retrieving weather forecast."
-
-    weather_caption_text = generate_weather_caption()
-
 
     if holiday_info["is_holiday"]:
         # 如果是节日，生成节日 caption
@@ -462,8 +456,8 @@ def regenerate_weather_image():
     weather_info = request.form.get("weather_info")
     weather_caption = request.form.get("weather_caption")
 
-    # AI-generate the weather image
-    weather_image_url = generate_weather_image()
+    # Get local image based on the existing weather caption
+    weather_image_url = get_image_from_caption(weather_caption)
 
     return render_template(
         "index.html",
@@ -794,6 +788,36 @@ def get_dish_image(dish_name):
         print(f"Error loading image for {dish_name}: {e}")
     return '/static/images/placeholder.jpg'
 
+def get_image_from_caption(caption):
+    """
+    Parses a caption to find a dish name and returns a corresponding local image.
+    """
+    if not caption:
+        return get_dish_image(None)
+        
+    try:
+        with open(DISH_IMAGE_MAP_PATH, 'r') as f:
+            dish_image_map = json.load(f)
+        
+        if not dish_image_map:
+            # No dishes in the map, return placeholder
+            return get_dish_image(None)
+
+        # Search for any of the dish names in the caption (case-insensitive)
+        for dish_name in dish_image_map.keys():
+            if dish_name.lower() in caption.lower():
+                print(f"✅ Found '{dish_name}' in weather caption, selecting a local image.")
+                return get_dish_image(dish_name)
+
+        # Fallback: if no dish is mentioned, pick a random image from the entire library
+        print("🤔 No specific dish found in weather caption. Selecting a random local image as fallback.")
+        random_dish = random.choice(list(dish_image_map.keys()))
+        return get_dish_image(random_dish)
+
+    except (FileNotFoundError, json.JSONDecodeError, IndexError):
+        # Fallback in case of any error (e.g., file not found, empty map)
+        return get_dish_image(None) # Returns the placeholder
+
 @app.route('/manage-images', methods=['GET'])
 def manage_images():
     # Load mapping
@@ -803,7 +827,7 @@ def manage_images():
     except (FileNotFoundError, json.JSONDecodeError):
         dish_image_map = {}
     
-    all_dish_names = list(dish_image_map.keys())
+    all_dish_names = sorted(list(dish_image_map.keys()))
 
     return render_template('manage_images.html', dish_image_map=dish_image_map, all_dish_names=all_dish_names, upload_folder=app.config['UPLOAD_FOLDER'])
 
