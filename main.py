@@ -189,9 +189,9 @@ def get_holiday_info():
     return {"is_holiday": False, "next_holiday_in_days": None, "message": "No upcoming holidays found."}
 
 # === Generate Instagram Caption Based on Sales Data ===
-def generate_caption(dish_list):
+@ttl_cache(ttl_seconds=600)
+def generate_caption(top_dish_name):
     try:
-        top_dish_name = dish_list[0]['name']
         prompt = f"Write an Instagram caption to promote the Vietnamese dish '{top_dish_name}' in an appetizing, fun, and catchy way."
         response = client.chat.completions.create(
             model="gpt-4",
@@ -204,6 +204,7 @@ def generate_caption(dish_list):
         return f"⚠️ Error generating caption: {str(e)}"
 
 # === Generate Instagram Caption Based on Weather Conditions ===
+@ttl_cache(ttl_seconds=600)
 def generate_weather_caption():
     weather = get_weather()
     if not weather:
@@ -269,23 +270,28 @@ def health_check():
 
 @app.route("/")
 def index():
+    import time
+    t0 = time.time()
     top_dishes = get_top_dishes()
-    # For sales-based content, use uploaded images
+    print(f"[耗时] 获取销量数据: {time.time() - t0:.2f} 秒")
     for dish in top_dishes:
         dish['image_url'] = get_dish_image(dish['name'])
-
-    caption = generate_caption(top_dishes)
-    # The main sales image will be the first top dish's uploaded image
+    t1 = time.time()
+    caption = generate_caption(top_dishes[0]['name']) if top_dishes else ""
+    print(f"[耗时] 生成AI Caption: {time.time() - t1:.2f} 秒")
     image_url = top_dishes[0]['image_url'] if top_dishes else None
-
-    # Generate weather caption and then select image based on it
+    t2 = time.time()
     weather_caption_text = generate_weather_caption()
+    print(f"[耗时] 生成天气AI Caption: {time.time() - t2:.2f} 秒")
+    t3 = time.time()
     weather_image_url = get_image_from_caption(weather_caption_text)
-    
+    print(f"[耗时] 选取天气图片: {time.time() - t3:.2f} 秒")
+    t4 = time.time()
     holiday_info = get_holiday_info()
+    print(f"[耗时] 获取节日信息: {time.time() - t4:.2f} 秒")
     holiday_caption = None
-    holiday_image_url = None  # Holiday image still AI generated initially
-
+    holiday_image_url = None
+    t5 = time.time()
     # Get tomorrow's weather forecast safely
     try:
         forecast_url = f"https://api.openweathermap.org/data/2.5/forecast?q=New York&appid={WEATHER_API_KEY}&units=imperial"
@@ -301,21 +307,12 @@ def index():
     except Exception as e:
         print("❌ Error fetching forecast:", e)
         weather_info = "⚠️ Error retrieving weather forecast."
-
+    print(f"[耗时] 获取明日天气: {time.time() - t5:.2f} 秒")
+    t6 = time.time()
     if holiday_info["is_holiday"]:
-        # 如果是节日，生成节日 caption
-        try:
-            prompt = f"Tomorrow is {holiday_info['message']}. Write a festive Instagram caption recommending Vietnamese dishes."
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            holiday_caption = response.choices[0].message.content
-        except Exception as e:
-            holiday_caption = f"⚠️ Error generating holiday caption: {str(e)}"
-
-
-
+        holiday_caption = generate_holiday_caption(holiday_info["message"])
+        print(f"[耗时] 生成节日AI Caption: {time.time() - t6:.2f} 秒")
+    print(f"[耗时] 主页总耗时: {time.time() - t0:.2f} 秒")
     return render_template(
         "index.html",
         dishes=top_dishes,
@@ -364,14 +361,12 @@ def regenerate_weather_caption():
 def regenerate_sales_caption():
     print("DEBUG: Regenerating caption...")
     top_dishes = get_top_dishes()
-    # Add image_url to each dish in top_dishes
     for dish in top_dishes:
         dish['image_url'] = get_dish_image(dish['name'])
     weather_info = request.form.get("weather_info")
     weather_caption = request.form.get("weather_caption")
-    caption = generate_caption(top_dishes)
+    caption = generate_caption(top_dishes[0]['name']) if top_dishes else ""
     print(f"DEBUG: New caption is: {caption}")
-
     return render_template(
         "index.html",
         dishes=top_dishes,
@@ -647,15 +642,7 @@ def regenerate_holiday_caption():
     # 只刷新节日文案
     holiday_info = get_holiday_info()
     if holiday_info["is_holiday"]:
-        try:
-            prompt = f"Tomorrow is {holiday_info['message']}. Write a festive Instagram caption recommending Vietnamese dishes."
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=[{"role": "user", "content": prompt}]
-            )
-            holiday_caption = response.choices[0].message.content
-        except Exception as e:
-            holiday_caption = f"⚠️ Error generating holiday caption: {str(e)}"
+        holiday_caption = generate_holiday_caption(holiday_info["message"])
     else:
         holiday_caption = None
 
@@ -902,6 +889,19 @@ def change_image_category():
         with open(DISH_IMAGE_MAP_PATH, 'w') as f:
             json.dump(dish_image_map, f, indent=2)
     return redirect(url_for('manage_images'))
+
+# === Generate Instagram Caption Based on Holiday ===
+@ttl_cache(ttl_seconds=86400)  # 缓存一天
+def generate_holiday_caption(holiday_message):
+    prompt = f"Tomorrow is {holiday_message}. Write a festive Instagram caption recommending Vietnamese dishes."
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"⚠️ Error generating holiday caption: {str(e)}"
 
 if __name__ == "__main__":
     app.run(debug=True)
