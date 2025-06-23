@@ -45,7 +45,7 @@
   </div>
 
   <!-- Sales Tab -->
-  <div id="tab-sales" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+  <div id="tab-sales" class="grid grid-cols-1 md:grid-cols-3 gap-8 {% if active_tab != 'sales' %}hidden{% endif %}">
     <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
       <div>
         <h2 class="text-xl font-bold mb-4">🔥 Top 5 Dishes (Yesterday)</h2>
@@ -105,7 +105,7 @@
   </div>
 
   <!-- Weather Tab -->
-  <div id="tab-weather" class="hidden grid grid-cols-1 md:grid-cols-3 gap-8">
+  <div id="tab-weather" class="grid grid-cols-1 md:grid-cols-3 gap-8 {% if active_tab != 'weather' %}hidden{% endif %}">
     <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
       <div>
         <h2 class="text-xl font-bold mb-4">🌤️ Tomorrow's Weather</h2>
@@ -132,6 +132,10 @@
         <input type="hidden" name="caption" value="{{ caption }}">
         <input type="hidden" name="image_url" value="{{ image_url }}">
         <input type="hidden" name="weather_info" value="{{ weather_info }}">
+        <input type="hidden" name="weather_image_url" value="{{ weather_image_url }}">
+        <input type="hidden" name="holiday_caption" value="{{ holiday_caption }}">
+        <input type="hidden" name="holiday_message" value="{{ holiday_message }}">
+        <input type="hidden" name="holiday_image_url" value="{{ holiday_image_url }}">
         <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
       </form>
     </div>
@@ -150,6 +154,9 @@
         <input type="hidden" name="image_url" value="{{ image_url }}">
         <input type="hidden" name="weather_info" value="{{ weather_info }}">
         <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
+        <input type="hidden" name="holiday_caption" value="{{ holiday_caption }}">
+        <input type="hidden" name="holiday_message" value="{{ holiday_message }}">
+        <input type="hidden" name="holiday_image_url" value="{{ holiday_image_url }}">
         <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
       </form>
     </div>
@@ -165,7 +172,7 @@
   </div>
 
   <!-- Holiday Tab -->
-  <div id="tab-holiday" class="hidden grid grid-cols-1 md:grid-cols-3 gap-8">
+  <div id="tab-holiday" class="grid grid-cols-1 md:grid-cols-3 gap-8 {% if active_tab != 'holiday' %}hidden{% endif %}">
     <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
       <div>
         <h2 class="text-xl font-bold mb-4">🎊 Tomorrow's Holiday</h2>
@@ -197,7 +204,9 @@
         <input type="hidden" name="image_url" value="{{ image_url }}">
         <input type="hidden" name="weather_info" value="{{ weather_info }}">
         <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
+        <input type="hidden" name="weather_image_url" value="{{ weather_image_url }}">
         <input type="hidden" name="holiday_message" value="{{ holiday_message }}">
+        <input type="hidden" name="holiday_image_url" value="{{ holiday_image_url }}">
         <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
       </form>
     </div>
@@ -216,7 +225,9 @@
         <input type="hidden" name="image_url" value="{{ image_url }}">
         <input type="hidden" name="weather_info" value="{{ weather_info }}">
         <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
+        <input type="hidden" name="weather_image_url" value="{{ weather_image_url }}">
         <input type="hidden" name="holiday_caption" value="{{ holiday_caption }}">
+        <input type="hidden" name="holiday_message" value="{{ holiday_message }}">
         <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
       </form>
     </div>

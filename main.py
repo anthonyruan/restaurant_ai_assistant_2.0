@@ -326,7 +326,8 @@ def index():
         weather_image_url=weather_image_url,
         holiday_message=holiday_info["message"],
         holiday_caption=holiday_caption,
-        active_tab="sales"
+        active_tab="sales",
+        highlight_caption=False
     )
 
 # === Handle POST: Regenerate Weather-Based Caption Only ===
@@ -336,6 +337,10 @@ def regenerate_weather_caption():
     caption = request.form.get("caption")
     image_url = request.form.get("image_url")
     weather_info = request.form.get("weather_info")
+    weather_image_url = request.form.get("weather_image_url")
+    holiday_caption = request.form.get("holiday_caption")
+    holiday_message = request.form.get("holiday_message")
+    holiday_image_url = request.form.get("holiday_image_url")
     weather_caption_text = generate_weather_caption()
 
     return render_template(
@@ -345,7 +350,12 @@ def regenerate_weather_caption():
         image_url=image_url,
         weather_info=weather_info,
         weather_caption=weather_caption_text,
+        weather_image_url=weather_image_url,
+        holiday_caption=holiday_caption,
+        holiday_message=holiday_message,
+        holiday_image_url=holiday_image_url,
         highlight_weather_caption=True,
+        highlight_caption=False,
         active_tab="weather"
     )
 
@@ -393,7 +403,8 @@ def regenerate_sales_image():
         weather_info=weather_info,
         weather_caption=weather_caption,
         active_tab="sales",
-        highlight_image=True
+        highlight_image=True,
+        highlight_caption=False
     )
 
 
@@ -455,7 +466,10 @@ def regenerate_weather_image():
     image_url = request.form.get("image_url")
     weather_info = request.form.get("weather_info")
     weather_caption = request.form.get("weather_caption")
-
+    holiday_caption = request.form.get("holiday_caption")
+    holiday_message = request.form.get("holiday_message")
+    holiday_image_url = request.form.get("holiday_image_url")
+    # 只刷新图片
     weather_image_url = get_image_from_caption(weather_caption)
 
     return render_template(
@@ -466,6 +480,9 @@ def regenerate_weather_image():
         weather_info=weather_info,
         weather_caption=weather_caption,
         weather_image_url=weather_image_url,
+        holiday_caption=holiday_caption,
+        holiday_message=holiday_message,
+        holiday_image_url=holiday_image_url,
         highlight_weather_image=True,
         active_tab="weather"
     )
@@ -529,13 +546,14 @@ def regenerate_holiday_image():
     image_url = request.form.get("image_url")
     weather_info = request.form.get("weather_info")
     weather_caption = request.form.get("weather_caption")
+    weather_image_url = request.form.get("weather_image_url")
     holiday_caption = request.form.get("holiday_caption")
-
+    holiday_message = request.form.get("holiday_message")
+    # 只刷新节日图片
     prompt = (
         f"A vibrant Vietnamese dish presented with festive decorations, celebrating a special holiday. "
         f"Studio lighting, warm ambiance, wooden table background, close-up, Instagram style"
     )
-
     try:
         response = client.images.generate(
             model="dall-e-3",
@@ -555,7 +573,9 @@ def regenerate_holiday_image():
         image_url=image_url,
         weather_info=weather_info,
         weather_caption=weather_caption,
+        weather_image_url=weather_image_url,
         holiday_caption=holiday_caption,
+        holiday_message=holiday_message,
         holiday_image_url=holiday_image_url,
         highlight_holiday_image=True,
         active_tab="holiday"
@@ -621,7 +641,10 @@ def regenerate_holiday_caption():
     image_url = request.form.get("image_url")
     weather_info = request.form.get("weather_info")
     weather_caption = request.form.get("weather_caption")
-
+    weather_image_url = request.form.get("weather_image_url")
+    holiday_message = request.form.get("holiday_message")
+    holiday_image_url = request.form.get("holiday_image_url")
+    # 只刷新节日文案
     holiday_info = get_holiday_info()
     if holiday_info["is_holiday"]:
         try:
@@ -643,10 +666,10 @@ def regenerate_holiday_caption():
         image_url=image_url,
         weather_info=weather_info,
         weather_caption=weather_caption,
+        weather_image_url=weather_image_url,
         holiday_caption=holiday_caption,
-        holiday_message=holiday_info["message"],
-        weather_image_url=None,
-        holiday_image_url=None,
+        holiday_message=holiday_message,
+        holiday_image_url=holiday_image_url,
         highlight_holiday_caption=True,
         active_tab="holiday"
     )
@@ -689,8 +712,7 @@ def refresh_weather():
     holiday_caption = request.form.get("holiday_caption")
     holiday_message = request.form.get("holiday_message")
     holiday_image_url = request.form.get("holiday_image_url")
-
-    # 获取最新天气
+    # 只刷新天气信息
     try:
         forecast_url = f"https://api.openweathermap.org/data/2.5/forecast?q=New York&appid={WEATHER_API_KEY}&units=imperial"
         response = requests.get(forecast_url)
@@ -729,9 +751,10 @@ def refresh_holiday():
     weather_caption = request.form.get("weather_caption")
     weather_image_url = request.form.get("weather_image_url")
     holiday_caption = request.form.get("holiday_caption")
-    holiday_image_url = request.form.get("holiday_image_url")
-
+    # 只刷新节日信息
     holiday_info = get_holiday_info()
+    holiday_message = holiday_info["message"]
+    holiday_image_url = request.form.get("holiday_image_url")
 
     return render_template(
         "index.html",
@@ -742,7 +765,7 @@ def refresh_holiday():
         weather_caption=weather_caption,
         weather_image_url=weather_image_url,
         holiday_caption=holiday_caption,
-        holiday_message=holiday_info["message"],
+        holiday_message=holiday_message,
         holiday_image_url=holiday_image_url,
         active_tab="holiday"
     )
