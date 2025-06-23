@@ -67,7 +67,7 @@
     <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
       <div>
         <h2 class="text-xl font-bold mb-4">📝 AI Generated Caption</h2>
-        <p id="caption-text" class="{{ 'highlight' if highlight_caption }}">{{ caption }}</p>
+        <p id="caption-text" class="caption-text"{% if highlight_caption|default(false) %} data-highlight="true"{% endif %}>{{ caption }}</p>
       </div>
       <form action="/regenerate-caption" method="post" class="mt-4">
         <input type="hidden" name="image_url" value="{{ image_url }}">
@@ -265,6 +265,17 @@
         }
       }
     }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      var captionText = document.getElementById('caption-text');
+      if (captionText && captionText.dataset.highlight === "true") {
+        captionText.classList.add('highlight');
+        captionText.addEventListener('animationend', function() {
+          captionText.classList.remove('highlight');
+          captionText.removeAttribute('data-highlight');
+        }, { once: true });
+      }
+    });
   </script>
 </body>
 </html>
