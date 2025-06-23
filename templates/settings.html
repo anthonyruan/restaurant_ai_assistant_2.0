@@ -3,18 +3,35 @@
 <head>
   <title>Settings - Hashtag Management</title>
   <meta charset="utf-8">
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 40px; text-align: center; }
     textarea { width: 60%; min-height: 60px; font-size: 16px; }
-    button { margin-top: 20px; padding: 10px 30px; font-size: 16px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
-    button:hover { background: #1d4ed8; }
     .back-link { display: inline-block; margin-top: 30px; color: #2563eb; text-decoration: none; }
     .back-link:hover { text-decoration: underline; }
     .success { color: green; margin-bottom: 20px; }
   </style>
 </head>
 <body>
-  <h1>Hashtag Settings</h1>
+  <!-- Navigation Bar -->
+  <nav class="bg-white shadow-lg fixed top-0 left-0 right-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <a href="/" class="flex-shrink-0 text-2xl font-bold text-blue-600 tracking-tight">AI Assistant</a>
+        </div>
+        <div class="block">
+          <div class="ml-10 flex items-baseline space-x-4">
+            <a href="{{ url_for('manage_images') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow">Image Library</a>
+            <a href="{{ url_for('settings') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow">Settings</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <div style="height: 64px;"></div>
+  <!-- End Navigation Bar -->
+  <h1 class="text-3xl font-bold mt-8 mb-4">Hashtag Settings</h1>
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <ul>
@@ -24,11 +41,11 @@
       </ul>
     {% endif %}
   {% endwith %}
-  <form method="post">
-    <label for="hashtags">Edit Hashtags (will be added to all captions):</label><br>
-    <textarea name="hashtags" id="hashtags" rows="3">{{ hashtags }}</textarea><br>
-    <button type="submit">Save</button>
+  <form method="post" class="mb-8">
+    <label for="hashtags" class="block mb-2 font-semibold">Edit Hashtags (will be added to all captions):</label>
+    <textarea name="hashtags" id="hashtags" rows="3" class="border rounded p-2 w-1/2 mx-auto">{{ hashtags }}</textarea><br>
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow mt-4">Save</button>
   </form>
   <a class="back-link" href="{{ url_for('index') }}">⬅️ Back to Home</a>
 </body>
-</html> 
+</html>
