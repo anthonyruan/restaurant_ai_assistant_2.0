@@ -16,6 +16,7 @@ import random  # Add this at the top if not present
 UPLOAD_FOLDER = 'static/images/dishes'
 ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif'}
 DISH_IMAGE_MAP_PATH = 'dish_image_map.json'
+SETTINGS_PATH = "settings.json"
 
 
 
@@ -25,6 +26,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.secret_key = "vietspot2024supersecret"  # 用于session和flash消息
 
 # === Load API Keys from Environment ===
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -199,31 +201,26 @@ def generate_caption(top_dish_name):
                 {"role": "user", "content": prompt}
             ]
         )
-        return response.choices[0].message.content
+        return response.choices[0].message.content.strip() + "\n\n" + get_hashtags()
     except Exception as e:
-        return f"⚠️ Error generating caption: {str(e)}"
+        return f"⚠️ Error generating caption: {str(e)}\n\n" + get_hashtags()
 
 # === Generate Instagram Caption Based on Weather Conditions ===
 @ttl_cache(ttl_seconds=600)
 def generate_weather_caption():
     weather = get_weather()
     if not weather:
-        return "⚠️ Weather data unavailable"
-        
-    # Get the list of available dishes from the image map
+        return "⚠️ Weather data unavailable\n\n" + get_hashtags()
     try:
         with open(DISH_IMAGE_MAP_PATH, 'r') as f:
             dish_image_map = json.load(f)
         dish_list = list(dish_image_map.keys())
     except (FileNotFoundError, json.JSONDecodeError):
         dish_list = []
-
     if not dish_list:
-        # Fallback if no dishes are available in the map
         dish_list_str = "any delicious Vietnamese dish"
     else:
         dish_list_str = ", ".join(dish_list)
-
     prompt = (
         f"Write an Instagram caption recommending a dish for a {weather['description']} day "
         f"with a temperature of {weather['temp']}°F. "
@@ -237,9 +234,9 @@ def generate_weather_caption():
                 {"role": "user", "content": prompt}
             ]
         )
-        return response.choices[0].message.content
+        return response.choices[0].message.content.strip() + "\n\n" + get_hashtags()
     except Exception as e:
-        return f"⚠️ Error generating weather-based caption: {str(e)}"
+        return f"⚠️ Error generating weather-based caption: {str(e)}\n\n" + get_hashtags()
 
 # === Image Prompt Overrides for Specific Dishes ===
 dish_prompt_overrides = {
@@ -899,9 +896,30 @@ def generate_holiday_caption(holiday_message):
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}]
         )
-        return response.choices[0].message.content
+        return response.choices[0].message.content.strip() + "\n\n" + get_hashtags()
     except Exception as e:
-        return f"⚠️ Error generating holiday caption: {str(e)}"
+        return f"⚠️ Error generating holiday caption: {str(e)}\n\n" + get_hashtags()
+
+def get_hashtags():
+    if not os.path.exists(SETTINGS_PATH):
+        return "#vietspot #vietspotNYC #vietnamese #vietfood"
+    with open(SETTINGS_PATH, "r") as f:
+        data = json.load(f)
+        return data.get("hashtags", "#vietspot #vietspotNYC #vietnamese #vietfood")
+
+def set_hashtags(new_hashtags):
+    with open(SETTINGS_PATH, "w") as f:
+        json.dump({"hashtags": new_hashtags}, f, indent=2)
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    if request.method == "POST":
+        new_hashtags = request.form.get("hashtags", "").strip()
+        set_hashtags(new_hashtags)
+        flash("Hashtags updated successfully!", "success")
+        return redirect(url_for("settings"))
+    hashtags = get_hashtags()
+    return render_template("settings.html", hashtags=hashtags)
 
 if __name__ == "__main__":
     app.run(debug=True)
