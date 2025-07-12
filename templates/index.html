@@ -65,10 +65,30 @@
       </form>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+    <div class="relative bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+      {% if not editing_caption %}
+        <form action="/start-edit-caption" method="post" class="absolute top-4 right-4">
+          <button type="submit" class="bg-gray-200 hover:bg-blue-600 hover:text-white text-gray-800 p-1 rounded-full shadow" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2a2 2 0 012-2h2a2 2 0 012 2v2h6" />
+            </svg>
+          </button>
+        </form>
+      {% endif %}
       <div>
         <h2 class="text-xl font-bold mb-4">📝 AI Generated Caption</h2>
-        <p id="caption-text" class="caption-text"{% if highlight_caption|default(false) %} data-highlight="true"{% endif %}>{{ caption }}</p>
+        {% if editing_caption %}
+          <form action="/edit-caption" method="post" class="mb-2 flex flex-col items-center">
+            <input type="hidden" name="active_tab" value="sales">
+            <textarea name="edited_caption" rows="4" class="w-full border rounded p-2 mb-2">{{ caption }}</textarea>
+            <div class="flex space-x-2">
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save</button>
+              <button type="submit" formaction="/cancel-edit-caption" formmethod="post" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded">Cancel</button>
+            </div>
+          </form>
+        {% else %}
+          <p id="caption-text" class="caption-text"{% if highlight_caption|default(false) %} data-highlight="true"{% endif %}>{{ caption }}</p>
+        {% endif %}
       </div>
       <form action="/regenerate-caption" method="post" class="mt-4">
         <input type="hidden" name="image_url" value="{{ image_url }}">
@@ -123,11 +143,31 @@
         <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
       </form>
     </div>
-
-    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+    <div class="relative bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+      {% if not editing_weather_caption %}
+        <form action="/start-edit-weather-caption" method="post" class="absolute top-4 right-4">
+          <input type="hidden" name="active_tab" value="weather">
+          <button type="submit" class="bg-gray-200 hover:bg-blue-600 hover:text-white text-gray-800 p-1 rounded-full shadow" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2a2 2 0 012-2h2a2 2 0 012 2v2h6" />
+            </svg>
+          </button>
+        </form>
+      {% endif %}
       <div>
         <h2 class="text-xl font-bold mb-4">📝 AI Caption Based on Weather</h2>
-        <p id="weather-caption-text" class="{{ 'highlight' if highlight_weather_caption }}">{{ weather_caption }}</p>
+        {% if editing_weather_caption %}
+          <form action="/edit-weather-caption" method="post" class="mb-2 flex flex-col items-center">
+            <input type="hidden" name="active_tab" value="weather">
+            <textarea name="edited_weather_caption" rows="4" class="w-full border rounded p-2 mb-2">{{ weather_caption }}</textarea>
+            <div class="flex space-x-2">
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save</button>
+              <button type="submit" formaction="/cancel-edit-weather-caption" formmethod="post" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded">Cancel</button>
+            </div>
+          </form>
+        {% else %}
+          <p id="weather-caption-text" class="caption-text">{{ weather_caption }}</p>
+        {% endif %}
       </div>
       <form action="/weather-caption" method="post" class="mt-4">
         <input type="hidden" name="caption" value="{{ caption }}">
@@ -190,14 +230,34 @@
         <button class="w-full bg-blue-700 text-white px-4 py-2 rounded">Regenerate</button>
       </form>
     </div>
-
-    <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+    <div class="relative bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
+      {% if not editing_holiday_caption %}
+        <form action="/start-edit-holiday-caption" method="post" class="absolute top-4 right-4">
+          <input type="hidden" name="active_tab" value="holiday">
+          <button type="submit" class="bg-gray-200 hover:bg-blue-600 hover:text-white text-gray-800 p-1 rounded-full shadow" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2a2 2 0 012-2h2a2 2 0 012 2v2h6" />
+            </svg>
+          </button>
+        </form>
+      {% endif %}
       <div>
         <h2 class="text-xl font-bold mb-4">📝 AI Caption Based on Holiday</h2>
-        {% if holiday_caption %}
-          <p id="holiday-caption-text" class="{{ 'highlight' if highlight_holiday_caption }}">{{ holiday_caption }}</p>
+        {% if editing_holiday_caption %}
+          <form action="/edit-holiday-caption" method="post" class="mb-2 flex flex-col items-center">
+            <input type="hidden" name="active_tab" value="holiday">
+            <textarea name="edited_holiday_caption" rows="4" class="w-full border rounded p-2 mb-2">{{ holiday_caption }}</textarea>
+            <div class="flex space-x-2">
+              <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save</button>
+              <button type="submit" formaction="/cancel-edit-holiday-caption" formmethod="post" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded">Cancel</button>
+            </div>
+          </form>
         {% else %}
-          <p class="text-gray-500">No holiday caption available.</p>
+          {% if holiday_caption %}
+            <p id="holiday-caption-text" class="caption-text">{{ holiday_caption }}</p>
+          {% else %}
+            <p class="text-gray-500">No holiday caption available.</p>
+          {% endif %}
         {% endif %}
       </div>
       <form action="/regenerate-holiday-caption" method="post" class="mt-4">

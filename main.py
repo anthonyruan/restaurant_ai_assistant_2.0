@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, session
 from dotenv import load_dotenv
 import openai
 import uuid
@@ -192,7 +192,7 @@ def get_holiday_info():
 
 # === Generate Instagram Caption Based on Sales Data ===
 @ttl_cache(ttl_seconds=600)
-def generate_caption(top_dish_name):
+def generate_caption(top_dish_name, salt=None):
     try:
         prompt = f"Write an Instagram caption to promote the Vietnamese dish '{top_dish_name}' in an appetizing, fun, and catchy way."
         response = client.chat.completions.create(
@@ -207,7 +207,7 @@ def generate_caption(top_dish_name):
 
 # === Generate Instagram Caption Based on Weather Conditions ===
 @ttl_cache(ttl_seconds=600)
-def generate_weather_caption():
+def generate_weather_caption(salt=None):
     weather = get_weather()
     if not weather:
         return "⚠️ Weather data unavailable\n\n" + get_hashtags()
@@ -265,29 +265,95 @@ def generate_dish_image(dish_name):
 def health_check():
     return "OK", 200
 
+@app.route("/start-edit-caption", methods=["POST"])
+def start_edit_caption():
+    session['editing_caption'] = True
+    return redirect(url_for('index'))
+
+@app.route("/edit-caption", methods=["POST"])
+def edit_caption():
+    session['edited_caption'] = request.form.get('edited_caption', '').strip()
+    session['editing_caption'] = False
+    return redirect(url_for('index'))
+
+@app.route("/cancel-edit-caption", methods=["POST"])
+def cancel_edit_caption():
+    session['editing_caption'] = False
+    # 不再清空 session['edited_caption']
+    return redirect(url_for('index'))
+
+# Weather Caption 编辑相关路由
+@app.route("/start-edit-weather-caption", methods=["POST"])
+def start_edit_weather_caption():
+    session['editing_weather_caption'] = True
+    active_tab = request.form.get('active_tab') or request.args.get('active_tab') or 'weather'
+    return redirect(url_for('index', active_tab=active_tab))
+
+@app.route("/edit-weather-caption", methods=["POST"])
+def edit_weather_caption():
+    session['edited_weather_caption'] = request.form.get('edited_weather_caption', '').strip()
+    session['editing_weather_caption'] = False
+    active_tab = request.form.get('active_tab') or request.args.get('active_tab') or 'weather'
+    return redirect(url_for('index', active_tab=active_tab))
+
+@app.route("/cancel-edit-weather-caption", methods=["POST"])
+def cancel_edit_weather_caption():
+    session['editing_weather_caption'] = False
+    # 不再清空 session['edited_weather_caption']
+    active_tab = request.form.get('active_tab') or request.args.get('active_tab') or 'weather'
+    return redirect(url_for('index', active_tab=active_tab))
+
+# Holiday Caption 编辑相关路由
+@app.route("/start-edit-holiday-caption", methods=["POST"])
+def start_edit_holiday_caption():
+    session['editing_holiday_caption'] = True
+    active_tab = request.form.get('active_tab') or request.args.get('active_tab') or 'holiday'
+    return redirect(url_for('index', active_tab=active_tab))
+
+@app.route("/edit-holiday-caption", methods=["POST"])
+def edit_holiday_caption():
+    session['edited_holiday_caption'] = request.form.get('edited_holiday_caption', '').strip()
+    session['editing_holiday_caption'] = False
+    active_tab = request.form.get('active_tab') or request.args.get('active_tab') or 'holiday'
+    return redirect(url_for('index', active_tab=active_tab))
+
+@app.route("/cancel-edit-holiday-caption", methods=["POST"])
+def cancel_edit_holiday_caption():
+    session['editing_holiday_caption'] = False
+    # 不再清空 session['edited_holiday_caption']
+    active_tab = request.form.get('active_tab') or request.args.get('active_tab') or 'holiday'
+    return redirect(url_for('index', active_tab=active_tab))
+
+# 修改主页index路由，优先显示用户编辑的weather/holiday caption，并传递editing变量
 @app.route("/")
 def index():
     import time
     t0 = time.time()
+    active_tab = request.args.get('active_tab') or 'sales'
     top_dishes = get_top_dishes()
     print(f"[耗时] 获取销量数据: {time.time() - t0:.2f} 秒")
     for dish in top_dishes:
         dish['image_url'] = get_dish_image(dish['name'])
     t1 = time.time()
-    caption = generate_caption(top_dishes[0]['name']) if top_dishes else ""
+    ai_caption = generate_caption(top_dishes[0]['name']) if top_dishes else ""
+    caption = session.get('edited_caption', ai_caption)
+    editing_caption = session.get('editing_caption', False)
     print(f"[耗时] 生成AI Caption: {time.time() - t1:.2f} 秒")
     image_url = top_dishes[0]['image_url'] if top_dishes else None
     t2 = time.time()
-    weather_caption_text = generate_weather_caption()
+    ai_weather_caption = generate_weather_caption()
+    weather_caption = session.get('edited_weather_caption', ai_weather_caption)
+    editing_weather_caption = session.get('editing_weather_caption', False)
     print(f"[耗时] 生成天气AI Caption: {time.time() - t2:.2f} 秒")
     t3 = time.time()
-    weather_image_url = get_image_from_caption(weather_caption_text)
+    weather_image_url = get_image_from_caption(weather_caption)
     print(f"[耗时] 选取天气图片: {time.time() - t3:.2f} 秒")
     t4 = time.time()
     holiday_info = get_holiday_info()
     print(f"[耗时] 获取节日信息: {time.time() - t4:.2f} 秒")
+    ai_holiday_caption = None
     holiday_caption = None
-    holiday_image_url = None
+    editing_holiday_caption = session.get('editing_holiday_caption', False)
     t5 = time.time()
     # Get tomorrow's weather forecast safely
     try:
@@ -307,7 +373,8 @@ def index():
     print(f"[耗时] 获取明日天气: {time.time() - t5:.2f} 秒")
     t6 = time.time()
     if holiday_info["is_holiday"]:
-        holiday_caption = generate_holiday_caption(holiday_info["message"])
+        ai_holiday_caption = generate_holiday_caption(holiday_info["message"])
+        holiday_caption = session.get('edited_holiday_caption', ai_holiday_caption)
         print(f"[耗时] 生成节日AI Caption: {time.time() - t6:.2f} 秒")
     print(f"[耗时] 主页总耗时: {time.time() - t0:.2f} 秒")
     return render_template(
@@ -316,12 +383,15 @@ def index():
         caption=caption,
         image_url=image_url,
         weather_info=weather_info,
-        weather_caption=weather_caption_text,
+        weather_caption=weather_caption,
         weather_image_url=weather_image_url,
         holiday_message=holiday_info["message"],
         holiday_caption=holiday_caption,
-        active_tab="sales",
-        highlight_caption=False
+        active_tab=active_tab,
+        highlight_caption=False,
+        editing_caption=editing_caption,
+        editing_weather_caption=editing_weather_caption,
+        editing_holiday_caption=editing_holiday_caption
     )
 
 # === Handle POST: Regenerate Weather-Based Caption Only ===
@@ -335,8 +405,10 @@ def regenerate_weather_caption():
     holiday_caption = request.form.get("holiday_caption")
     holiday_message = request.form.get("holiday_message")
     holiday_image_url = request.form.get("holiday_image_url")
-    weather_caption_text = generate_weather_caption()
-
+    # 清除自定义内容
+    session.pop('edited_weather_caption', None)
+    weather_caption_text = generate_weather_caption(salt=str(uuid.uuid4()))
+    session['edited_weather_caption'] = weather_caption_text  # 新增：同步 session
     return render_template(
         "index.html",
         dishes=top_dishes,
@@ -350,7 +422,8 @@ def regenerate_weather_caption():
         holiday_image_url=holiday_image_url,
         highlight_weather_caption=True,
         highlight_caption=False,
-        active_tab="weather"
+        active_tab="weather",
+        editing_weather_caption=False
     )
 
 # === Handle POST: Regenerate Sales-Based Caption Only ===
@@ -362,8 +435,12 @@ def regenerate_sales_caption():
         dish['image_url'] = get_dish_image(dish['name'])
     weather_info = request.form.get("weather_info")
     weather_caption = request.form.get("weather_caption")
-    caption = generate_caption(top_dishes[0]['name']) if top_dishes else ""
+    # 清除用户自定义的 caption
+    session.pop('edited_caption', None)
+    # 传入随机 salt，强制绕过缓存
+    caption = generate_caption(top_dishes[0]['name'], salt=str(uuid.uuid4())) if top_dishes else ""
     print(f"DEBUG: New caption is: {caption}")
+    session['edited_caption'] = caption  # 新增：同步 session
     return render_template(
         "index.html",
         dishes=top_dishes,
@@ -636,13 +713,14 @@ def regenerate_holiday_caption():
     weather_image_url = request.form.get("weather_image_url")
     holiday_message = request.form.get("holiday_message")
     holiday_image_url = request.form.get("holiday_image_url")
-    # 只刷新节日文案
+    # 清除自定义内容
+    session.pop('edited_holiday_caption', None)
     holiday_info = get_holiday_info()
     if holiday_info["is_holiday"]:
-        holiday_caption = generate_holiday_caption(holiday_info["message"])
+        holiday_caption = generate_holiday_caption(holiday_info["message"], salt=str(uuid.uuid4()))
     else:
         holiday_caption = None
-
+    session['edited_holiday_caption'] = holiday_caption  # 新增：同步 session
     return render_template(
         "index.html",
         dishes=top_dishes,
@@ -655,7 +733,8 @@ def regenerate_holiday_caption():
         holiday_message=holiday_message,
         holiday_image_url=holiday_image_url,
         highlight_holiday_caption=True,
-        active_tab="holiday"
+        active_tab="holiday",
+        editing_holiday_caption=False
     )
 
 @app.route("/update-top-dishes", methods=["POST"])
@@ -889,7 +968,7 @@ def change_image_category():
 
 # === Generate Instagram Caption Based on Holiday ===
 @ttl_cache(ttl_seconds=86400)  # 缓存一天
-def generate_holiday_caption(holiday_message):
+def generate_holiday_caption(holiday_message, salt=None):
     prompt = f"Tomorrow is {holiday_message}. Write a festive Instagram caption recommending Vietnamese dishes."
     try:
         response = client.chat.completions.create(
