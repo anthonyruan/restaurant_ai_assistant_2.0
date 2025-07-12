@@ -13,6 +13,33 @@
     .highlight {
       animation: highlight-fade 1.5s ease-out;
     }
+    .caption-editable {
+      cursor: pointer;
+      border-radius: 6px;
+      transition: box-shadow 0.2s, border 0.2s;
+      position: relative;
+    }
+    .caption-editable:hover {
+      box-shadow: 0 0 0 2px #2563eb;
+      border: 1px dashed #2563eb;
+    }
+    .caption-editable .edit-tip {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: #2563eb;
+      color: #fff;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 2px;
+      white-space: nowrap;
+      z-index: 10;
+    }
+    .caption-editable:hover .edit-tip {
+      display: block;
+    }
   </style>
 </head>
 <body class="bg-gray-100 pt-28 pb-8 px-2 sm:px-8" onload="showTab('{{ active_tab | default('sales') }}', null)">
@@ -66,15 +93,6 @@
     </div>
 
     <div class="relative bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
-      {% if not editing_caption %}
-        <form action="/start-edit-caption" method="post" class="absolute top-4 right-4">
-          <button type="submit" class="bg-gray-200 hover:bg-blue-600 hover:text-white text-gray-800 p-1 rounded-full shadow" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2a2 2 0 012-2h2a2 2 0 012 2v2h6" />
-            </svg>
-          </button>
-        </form>
-      {% endif %}
       <div>
         <h2 class="text-xl font-bold mb-4">📝 AI Generated Caption</h2>
         {% if editing_caption %}
@@ -87,7 +105,10 @@
             </div>
           </form>
         {% else %}
-          <p id="caption-text" class="caption-text"{% if highlight_caption|default(false) %} data-highlight="true"{% endif %}>{{ caption }}</p>
+          <p id="caption-text" class="caption-text caption-editable"{% if highlight_caption|default(false) %} data-highlight="true"{% endif %}>
+            {{ caption }}
+            <span class="edit-tip">Click to edit</span>
+          </p>
         {% endif %}
       </div>
       <form action="/regenerate-caption" method="post" class="mt-4">
@@ -144,16 +165,6 @@
       </form>
     </div>
     <div class="relative bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
-      {% if not editing_weather_caption %}
-        <form action="/start-edit-weather-caption" method="post" class="absolute top-4 right-4">
-          <input type="hidden" name="active_tab" value="weather">
-          <button type="submit" class="bg-gray-200 hover:bg-blue-600 hover:text-white text-gray-800 p-1 rounded-full shadow" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2a2 2 0 012-2h2a2 2 0 012 2v2h6" />
-            </svg>
-          </button>
-        </form>
-      {% endif %}
       <div>
         <h2 class="text-xl font-bold mb-4">📝 AI Caption Based on Weather</h2>
         {% if editing_weather_caption %}
@@ -166,7 +177,7 @@
             </div>
           </form>
         {% else %}
-          <p id="weather-caption-text" class="caption-text">{{ weather_caption }}</p>
+          <p id="weather-caption-text" class="caption-text caption-editable">{{ weather_caption }}<span class="edit-tip">Click to edit</span></p>
         {% endif %}
       </div>
       <form action="/weather-caption" method="post" class="mt-4">
@@ -231,16 +242,6 @@
       </form>
     </div>
     <div class="relative bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
-      {% if not editing_holiday_caption %}
-        <form action="/start-edit-holiday-caption" method="post" class="absolute top-4 right-4">
-          <input type="hidden" name="active_tab" value="holiday">
-          <button type="submit" class="bg-gray-200 hover:bg-blue-600 hover:text-white text-gray-800 p-1 rounded-full shadow" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h6v-2a2 2 0 012-2h2a2 2 0 012 2v2h6" />
-            </svg>
-          </button>
-        </form>
-      {% endif %}
       <div>
         <h2 class="text-xl font-bold mb-4">📝 AI Caption Based on Holiday</h2>
         {% if editing_holiday_caption %}
@@ -253,11 +254,7 @@
             </div>
           </form>
         {% else %}
-          {% if holiday_caption %}
-            <p id="holiday-caption-text" class="caption-text">{{ holiday_caption }}</p>
-          {% else %}
-            <p class="text-gray-500">No holiday caption available.</p>
-          {% endif %}
+          <p id="holiday-caption-text" class="caption-text caption-editable">{{ holiday_caption }}<span class="edit-tip">Click to edit</span></p>
         {% endif %}
       </div>
       <form action="/regenerate-holiday-caption" method="post" class="mt-4">
@@ -335,6 +332,54 @@
           captionText.classList.remove('highlight');
           captionText.removeAttribute('data-highlight');
         }, { once: true });
+      }
+      // 行内编辑：点击 Caption 进入编辑
+      if (captionText) {
+        captionText.addEventListener('click', function() {
+          // 创建一个隐藏表单并提交，触发 /start-edit-caption
+          var form = document.createElement('form');
+          form.method = 'post';
+          form.action = '/start-edit-caption';
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'active_tab';
+          input.value = 'sales';
+          form.appendChild(input);
+          document.body.appendChild(form);
+          form.submit();
+        });
+      }
+      // Weather 行内编辑
+      var weatherCaptionText = document.getElementById('weather-caption-text');
+      if (weatherCaptionText) {
+        weatherCaptionText.addEventListener('click', function() {
+          var form = document.createElement('form');
+          form.method = 'post';
+          form.action = '/start-edit-weather-caption';
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'active_tab';
+          input.value = 'weather';
+          form.appendChild(input);
+          document.body.appendChild(form);
+          form.submit();
+        });
+      }
+      // Holiday 行内编辑
+      var holidayCaptionText = document.getElementById('holiday-caption-text');
+      if (holidayCaptionText) {
+        holidayCaptionText.addEventListener('click', function() {
+          var form = document.createElement('form');
+          form.method = 'post';
+          form.action = '/start-edit-holiday-caption';
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'active_tab';
+          input.value = 'holiday';
+          form.appendChild(input);
+          document.body.appendChild(form);
+          form.submit();
+        });
       }
     });
   </script>
