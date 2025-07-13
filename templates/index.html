@@ -40,6 +40,34 @@
     .caption-editable:hover .edit-tip {
       display: block;
     }
+    .image-editable {
+      cursor: pointer;
+      border-radius: 8px;
+      transition: box-shadow 0.2s, border 0.2s;
+      position: relative;
+      display: inline-block;
+    }
+    .image-editable:hover {
+      box-shadow: 0 0 0 2px #2563eb;
+      border: 2px dashed #2563eb;
+    }
+    .image-editable .edit-tip {
+      display: none;
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2563eb;
+      color: #fff;
+      font-size: 13px;
+      padding: 2px 10px;
+      border-radius: 4px;
+      z-index: 10;
+      white-space: nowrap;
+    }
+    .image-editable:hover .edit-tip {
+      display: block;
+    }
   </style>
 </head>
 <body class="bg-gray-100 pt-28 pb-8 px-2 sm:px-8" onload="showTab('{{ active_tab | default('sales') }}', null)">
@@ -123,12 +151,15 @@
       <div>
         <h2 class="text-xl font-bold mb-4">📸 AI Generated Image</h2>
         {% if image_url and image_url != "None" %}
-          <img src="{{ image_url }}" id="sales-image" class="rounded-md mb-2 {{ 'highlight' if highlight_image }} w-full h-48 object-cover">
+          <div class="image-editable" id="sales-image-editable" style="max-width:400px; margin:0 auto;">
+            <img src="{{ image_url }}" id="sales-image" class="rounded-md mb-4 w-full h-64 object-cover">
+            <span class="edit-tip">Click to change image</span>
+          </div>
         {% else %}
           <p class="text-gray-500">Image not generated yet. Click below to generate.</p>
         {% endif %}
       </div>
-      <form action="/regenerate-image" method="post" class="mt-4">
+      <form action="/regenerate-image" method="post" class="mt-6">
         <input type="hidden" name="caption" value="{{ caption }}">
         <input type="hidden" name="weather_info" value="{{ weather_info }}">
         <input type="hidden" name="weather_caption" value="{{ weather_caption }}">
@@ -196,12 +227,15 @@
       <div>
         <h2 class="text-xl font-bold mb-4">🌦️ AI Image Based on Weather</h2>
         {% if weather_image_url and weather_image_url != "None" %}
-          <img src="{{ weather_image_url }}" id="weather-image" class="rounded-md mb-2 {{ 'highlight' if highlight_weather_image }} w-full h-48 object-cover">
+          <div class="image-editable" id="weather-image-editable" style="max-width:400px; margin:0 auto;">
+            <img src="{{ weather_image_url }}" id="weather-image" class="rounded-md mb-4 w-full h-64 object-cover">
+            <span class="edit-tip">Click to change image</span>
+          </div>
         {% else %}
           <p class="text-gray-500">Weather image not generated yet.</p>
         {% endif %}
       </div>
-      <form action="/regenerate-weather-image" method="post" class="mt-4">
+      <form action="/regenerate-weather-image" method="post" class="mt-6">
         <input type="hidden" name="caption" value="{{ caption }}">
         <input type="hidden" name="image_url" value="{{ image_url }}">
         <input type="hidden" name="weather_info" value="{{ weather_info }}">
@@ -273,12 +307,15 @@
       <div>
         <h2 class="text-xl font-bold mb-4">📸 AI Image Based on Holiday</h2>
         {% if holiday_image_url and holiday_image_url != "None" %}
-          <img src="{{ holiday_image_url }}" id="holiday-image" class="rounded-md mb-2 {{ 'highlight' if highlight_holiday_image }} w-full h-48 object-cover">
+          <div class="image-editable" id="holiday-image-editable" style="max-width:400px; margin:0 auto;">
+            <img src="{{ holiday_image_url }}" id="holiday-image" class="rounded-md mb-4 w-full h-64 object-cover">
+            <span class="edit-tip">Click to change image</span>
+          </div>
         {% else %}
           <p class="text-gray-500">Holiday image not generated yet.</p>
         {% endif %}
       </div>
-      <form action="/regenerate-holiday-image" method="post" class="mt-4">
+      <form action="/regenerate-holiday-image" method="post" class="mt-6">
         <input type="hidden" name="caption" value="{{ caption }}">
         <input type="hidden" name="image_url" value="{{ image_url }}">
         <input type="hidden" name="weather_info" value="{{ weather_info }}">
@@ -379,6 +416,27 @@
           form.appendChild(input);
           document.body.appendChild(form);
           form.submit();
+        });
+      }
+      // Sales图片行内编辑
+      var salesImageEditable = document.getElementById('sales-image-editable');
+      if (salesImageEditable) {
+        salesImageEditable.addEventListener('click', function() {
+          window.location.href = '/select-image';
+        });
+      }
+      // Weather图片行内编辑
+      var weatherImageEditable = document.getElementById('weather-image-editable');
+      if (weatherImageEditable) {
+        weatherImageEditable.addEventListener('click', function() {
+          window.location.href = '/select-image?target=weather';
+        });
+      }
+      // Holiday图片行内编辑
+      var holidayImageEditable = document.getElementById('holiday-image-editable');
+      if (holidayImageEditable) {
+        holidayImageEditable.addEventListener('click', function() {
+          window.location.href = '/select-image?target=holiday';
         });
       }
     });

@@ -327,9 +327,22 @@ def cancel_edit_holiday_caption():
 # 修改主页index路由，优先显示用户编辑的weather/holiday caption，并传递editing变量
 @app.route("/")
 def index():
+    # 每次刷新主页都清除图片选择session，保证图片自动匹配caption
+    session.pop('selected_sales_image', None)
+    session.pop('selected_weather_image', None)
+    session.pop('selected_holiday_image', None)
     import time
     t0 = time.time()
     active_tab = request.args.get('active_tab') or 'sales'
+    selected_image = request.args.get('selected_image')
+    selected_weather_image = request.args.get('selected_weather_image')
+    selected_holiday_image = request.args.get('selected_holiday_image')
+    if selected_image:
+        session['selected_sales_image'] = selected_image
+    if selected_weather_image:
+        session['selected_weather_image'] = selected_weather_image
+    if selected_holiday_image:
+        session['selected_holiday_image'] = selected_holiday_image
     top_dishes = get_top_dishes()
     print(f"[耗时] 获取销量数据: {time.time() - t0:.2f} 秒")
     for dish in top_dishes:
@@ -339,14 +352,17 @@ def index():
     caption = session.get('edited_caption', ai_caption)
     editing_caption = session.get('editing_caption', False)
     print(f"[耗时] 生成AI Caption: {time.time() - t1:.2f} 秒")
-    image_url = top_dishes[0]['image_url'] if top_dishes else None
+    image_url = session.get('selected_sales_image') or (top_dishes[0]['image_url'] if top_dishes else None)
     t2 = time.time()
     ai_weather_caption = generate_weather_caption()
     weather_caption = session.get('edited_weather_caption', ai_weather_caption)
     editing_weather_caption = session.get('editing_weather_caption', False)
     print(f"[耗时] 生成天气AI Caption: {time.time() - t2:.2f} 秒")
     t3 = time.time()
-    weather_image_url = get_image_from_caption(weather_caption)
+    if 'selected_weather_image' in session:
+        weather_image_url = session['selected_weather_image']
+    else:
+        weather_image_url = get_image_from_caption(weather_caption)
     print(f"[耗时] 选取天气图片: {time.time() - t3:.2f} 秒")
     t4 = time.time()
     holiday_info = get_holiday_info()
@@ -376,6 +392,11 @@ def index():
         ai_holiday_caption = generate_holiday_caption(holiday_info["message"])
         holiday_caption = session.get('edited_holiday_caption', ai_holiday_caption)
         print(f"[耗时] 生成节日AI Caption: {time.time() - t6:.2f} 秒")
+    # 优先显示用户选择的图片，否则自动根据caption匹配
+    if 'selected_holiday_image' in session:
+        holiday_image_url = session['selected_holiday_image']
+    else:
+        holiday_image_url = get_image_from_caption(holiday_caption)
     print(f"[耗时] 主页总耗时: {time.time() - t0:.2f} 秒")
     return render_template(
         "index.html",
@@ -387,6 +408,7 @@ def index():
         weather_image_url=weather_image_url,
         holiday_message=holiday_info["message"],
         holiday_caption=holiday_caption,
+        holiday_image_url=holiday_image_url,
         active_tab=active_tab,
         highlight_caption=False,
         editing_caption=editing_caption,
@@ -488,6 +510,9 @@ def post_to_instagram():
         image_url = request.url_root.rstrip('/') + image_url_relative
     else:
         image_url = image_url_relative
+    # 强制用 https
+    if image_url.startswith('http://'):
+        image_url = image_url.replace('http://', 'https://', 1)
 
     instagram_account_id = os.getenv("IG_USER_ID")
     access_token = os.getenv("IG_ACCESS_TOKEN")
@@ -508,6 +533,7 @@ def post_to_instagram():
         "access_token": access_token
     }
     upload_res = requests.post(upload_url, data=upload_payload)
+    print("Instagram upload response:", upload_res.text)
     creation_id = upload_res.json().get("id")
 
     if not creation_id:
@@ -999,6 +1025,16 @@ def settings():
         return redirect(url_for("settings"))
     hashtags = get_hashtags()
     return render_template("settings.html", hashtags=hashtags)
+
+@app.route('/select-image')
+def select_image():
+    import json
+    try:
+        with open('dish_image_map.json', 'r') as f:
+            dish_image_map = json.load(f)
+    except Exception:
+        dish_image_map = {}
+    return render_template('select_image.html', dish_image_map=dish_image_map)
 
 if __name__ == "__main__":
     app.run(debug=True)
