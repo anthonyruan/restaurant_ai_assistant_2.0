@@ -126,6 +126,7 @@
         {% if editing_caption %}
           <form action="/edit-caption" method="post" class="mb-2 flex flex-col items-center">
             <input type="hidden" name="active_tab" value="sales">
+            <input type="hidden" name="image_url" value="{{ image_url }}">
             <textarea name="edited_caption" rows="4" class="w-full border rounded p-2 mb-2">{{ caption }}</textarea>
             <div class="flex space-x-2">
               <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Save</button>
@@ -306,13 +307,20 @@
     <div class="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-between">
       <div>
         <h2 class="text-xl font-bold mb-4">📸 AI Image Based on Holiday</h2>
-        {% if holiday_image_url and holiday_image_url != "None" %}
+        {% if holiday_caption and holiday_image_url and holiday_image_url != "None" and holiday_image_url != "" %}
           <div class="image-editable" id="holiday-image-editable" style="max-width:400px; margin:0 auto;">
             <img src="{{ holiday_image_url }}" id="holiday-image" class="rounded-md mb-4 w-full h-64 object-cover">
             <span class="edit-tip">Click to change image</span>
           </div>
         {% else %}
-          <p class="text-gray-500">Holiday image not generated yet.</p>
+          <div class="flex flex-col items-center justify-center h-64 text-gray-400">
+            <svg width="64" height="64" fill="none" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <rect width="64" height="64" rx="16" fill="#F3F4F6" />
+              <path d="M20 44V28a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v16" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="32" cy="34" r="4" stroke="#9CA3AF" stroke-width="2" />
+            </svg>
+            <span class="mt-2">No holiday image</span>
+          </div>
         {% endif %}
       </div>
       <form action="/regenerate-holiday-image" method="post" class="mt-6">

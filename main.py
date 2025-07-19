@@ -268,19 +268,29 @@ def health_check():
 @app.route("/start-edit-caption", methods=["POST"])
 def start_edit_caption():
     session['editing_caption'] = True
+    image_url = request.form.get('image_url') or session.get('selected_sales_image')
+    if image_url:
+        return redirect(url_for('index', image_url=image_url))
     return redirect(url_for('index'))
 
 @app.route("/edit-caption", methods=["POST"])
 def edit_caption():
     session['edited_caption'] = request.form.get('edited_caption', '').strip()
     session['editing_caption'] = False
+    image_url = request.form.get('image_url') or session.get('selected_sales_image')
+    if image_url:
+        return redirect(url_for('index', image_url=image_url))
     return redirect(url_for('index'))
 
 @app.route("/cancel-edit-caption", methods=["POST"])
 def cancel_edit_caption():
     session['editing_caption'] = False
     # 不再清空 session['edited_caption']
-    return redirect(url_for('index'))
+    active_tab = request.form.get('active_tab') or request.args.get('active_tab') or 'sales'
+    image_url = request.form.get('image_url') or session.get('selected_sales_image')
+    if image_url:
+        return redirect(url_for('index', active_tab=active_tab, image_url=image_url))
+    return redirect(url_for('index', active_tab=active_tab))
 
 # Weather Caption 编辑相关路由
 @app.route("/start-edit-weather-caption", methods=["POST"])
@@ -328,15 +338,19 @@ def cancel_edit_holiday_caption():
 @app.route("/")
 def index():
     # 每次刷新主页都清除图片选择session，保证图片自动匹配caption
-    session.pop('selected_sales_image', None)
+    # session.pop('selected_sales_image', None)  # 注释掉这行，不再每次都清除
     session.pop('selected_weather_image', None)
     session.pop('selected_holiday_image', None)
     import time
     t0 = time.time()
     active_tab = request.args.get('active_tab') or 'sales'
     selected_image = request.args.get('selected_image')
+    selected_image_url = request.args.get('image_url')
     selected_weather_image = request.args.get('selected_weather_image')
     selected_holiday_image = request.args.get('selected_holiday_image')
+    # 优先用url参数的image_url
+    if selected_image_url:
+        session['selected_sales_image'] = selected_image_url
     if selected_image:
         session['selected_sales_image'] = selected_image
     if selected_weather_image:
@@ -352,7 +366,11 @@ def index():
     caption = session.get('edited_caption', ai_caption)
     editing_caption = session.get('editing_caption', False)
     print(f"[耗时] 生成AI Caption: {time.time() - t1:.2f} 秒")
-    image_url = session.get('selected_sales_image') or (top_dishes[0]['image_url'] if top_dishes else None)
+    # 只在用户主动选择图片时才用session，否则用top_dishes[0]['image_url']
+    if 'selected_sales_image' in session:
+        image_url = session['selected_sales_image']
+    else:
+        image_url = top_dishes[0]['image_url'] if top_dishes else None
     t2 = time.time()
     ai_weather_caption = generate_weather_caption()
     weather_caption = session.get('edited_weather_caption', ai_weather_caption)
